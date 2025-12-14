@@ -512,4 +512,623 @@ async function resolveSymbol(sym, mode, twelveKey){
 }
 
 async function resolveAllSymbols(){
-  const mode = $("#dataMode").valu
+  const mode = $("#dataMode").value;
+  const key = $("#twelveKey").value.trim();
+  const raw = $("#symbols").value.split("\n").map(x=>x.trim()).filter(Boolean);
+
+  const out = [];
+  for(const sym of raw){
+    const r = await resolveSymbol(sym, mode, key);
+    if(r) out.push(r);
+  }
+
+  // Reescribe textarea con resolved (solo símbolo)
+  $("#symbols").value = out.map(x=>x.resolved).join("\n");
+  toast("Símbolos", "Normalizados/Resueltos. Revisa el log si NAS100 cambió.", "good");
+  log("Símbolos finales: " + out.map(x=>x.resolved).join(", "));
+}
+
+/* =========================
+   Indicadores
+   ========================= */
+function sma(values, p){
+  const out = Array(values.length).fill(null);
+  let sum=0;
+  for(let i=0;i<values.length;i++){
+    sum += values[i];
+    if(i>=p) sum -= values[i-p];
+    if(i>=p-1) out[i]=sum/p;
+  }
+  return out;
+}
+function ema(values, p){
+  const out = Array(values.length).fill(null);
+  const k = 2/(p+1);
+  let prev=null;
+  for(let i=0;i<values.length;i++){
+    const v = values[i];
+    if(prev===null){
+      if(i>=p-1){
+        const seed = values.slice(i-p+1,i+1).reduce((a,b)=>a+b,0)/p;
+        prev = seed; out[i]=seed;
+      }
+    }else{
+      prev = v*k + prev*(1-k);
+      out[i]=prev;
+    }
+  }
+  return out;
+}
+function rsi(closes, p=14){
+  const out = Array(closes.length).fill(null);
+  let avgG=null, avgL=null;
+  for(let i=1;i<closes.length;i++){
+    const ch = closes[i]-closes[i-1];
+    const g = Math.max(ch,0);
+    const l = Math.max(-ch,0);
+    if(i<p){
+      avgG = (avgG??0)+g;
+      avgL = (avgL??0)+l;
+      continue;
+    }
+    if(i===p){
+      avgG = ((avgG??0)+g)/p;
+      avgL = ((avgL??0)+l)/p;
+    }else{
+      avgG = (avgG*(p-1)+g)/p;
+      avgL = (avgL*(p-1)+l)/p;
+    }
+    const rs = (avgL===0) ? 999 : avgG/avgL;
+    out[i] = 100 - (100/(1+rs));
+  }
+  return out;
+}
+function macd(closes, fast=12, slow=26, sig=9){
+  const ef = ema(closes, fast);
+  const es = ema(closes, slow);
+  const line = closes.map((_,i)=> (ef[i]==null||es[i]==null)?null:(ef[i]-es[i]));
+  const filled = line.map(v=>v==null?0:v);
+  const signal = ema(filled, sig).map((v,i)=> line[i]==null?null:v);
+  const hist = line.map((v,i)=> (v==null||signal[i]==null)?null:(v-signal[i]));
+  return { line, signal, hist };
+}
+function bollinger(closes, p=20, m=2){
+  const mid = sma(closes,p);
+  const up = Array(closes.length).fill(null);
+  const lo = Array(closes.length).fill(null);
+  for(let i=0;i<closes.length;i++){
+    if(i<p-1) continue;
+    const slice = closes.slice(i-p+1,i+1);
+    const mu = mid[i];
+    const varc = slice.reduce((a,v)=>a+(v-mu)*(v-mu),0)/p;
+    const sd = Math.sqrt(varc);
+    up[i]=mu+m*sd; lo[i]=mu-m*sd;
+  }
+  return { mid, upper:up, lower:lo };
+}
+function atr(candles, p=14){
+  const out = Array(candles.length).fill(null);
+  let prev=null;
+  const tr = (i)=>{
+    const c=candles[i];
+    const pc = i>0?candles[i-1].close:c.close;
+    return Math.max(c.high-c.low, Math.abs(c.high-pc), Math.abs(c.low-pc));
+  };
+  let seed=0;
+  for(let i=0;i<candles.length;i++){
+    const t=tr(i);
+    if(i<p){ seed+=t; continue; }
+    if(i===p){
+      prev=(seed+t)/p;
+      out[i]=prev;
+    }else{
+      prev=((prev*(p-1))+t)/p;
+      out[i]=prev;
+    }
+  }
+  return out;
+}
+function swings(candles, lb=3){
+  const hi=Array(candles.length).fill(null);
+  const lo=Array(candles.length).fill(null);
+  for(let i=lb;i<candles.length-lb;i++){
+    const h=candles[i].high, l=candles[i].low;
+    let isH=true,isL=true;
+    for(let j=1;j<=lb;j++){
+      if(candles[i-j].high>=h || candles[i+j].high>=h) isH=false;
+      if(candles[i-j].low<=l  || candles[i+j].low<=l)  isL=false;
+    }
+    if(isH) hi[i]=h;
+    if(isL) lo[i]=l;
+  }
+  return { hi, lo };
+}
+function candlePatterns(candles){
+  const out = Array(candles.length).fill(null).map(()=>({}));
+  for(let i=1;i<candles.length;i++){
+    const c=candles[i], p=candles[i-1];
+    const body=Math.abs(c.close-c.open);
+    const range=(c.high-c.low)||1e-9;
+    const upper=c.high-Math.max(c.open,c.close);
+    const lower=Math.min(c.open,c.close)-c.low;
+
+    out[i].doji = (body/range)<0.12;
+    out[i].hammer = (lower/range)>0.55 && (upper/range)<0.20 && (body/range)<0.35;
+
+    const pH=Math.max(p.open,p.close), pL=Math.min(p.open,p.close);
+    const cH=Math.max(c.open,c.close), cL=Math.min(c.open,c.close);
+    out[i].engulfBull = (c.close>c.open)&&(p.close<p.open)&&(cH>=pH)&&(cL<=pL);
+    out[i].engulfBear = (c.close<c.open)&&(p.close>p.open)&&(cH>=pH)&&(cL<=pL);
+  }
+  return out;
+}
+function computeIndicators(candles){
+  const closes = candles.map(c=>c.close);
+  return {
+    ema9: ema(closes,9),
+    ema21: ema(closes,21),
+    ema50: ema(closes,50),
+    ema200: ema(closes,200),
+    rsi: rsi(closes,14),
+    macd: macd(closes,12,26,9),
+    bb: bollinger(closes,20,2),
+    atr: atr(candles,14),
+    sw: swings(candles,3),
+    patt: candlePatterns(candles),
+    closes
+  };
+}
+
+/* =========================
+   Estrategias
+   ========================= */
+function sltp(price, atr14, slMode, tpMode){
+  let slDist = (slMode==="atr") ? (atr14*1.5) : (price*0.01);
+  let tpDist = (tpMode==="rr") ? (slDist*2) : (price*0.02);
+  return { slDist, tpDist };
+}
+function stratEMA(i, ind){
+  const { ema9, ema21, ema50, ema200, rsi } = ind;
+  const a9=ema9[i], a21=ema21[i], a50=ema50[i], a200=ema200[i];
+  if(a9==null||a21==null||a50==null||a200==null||rsi[i]==null) return null;
+
+  const crossUp = ema9[i-1]!=null && ema21[i-1]!=null && ema9[i-1]<=ema21[i-1] && ema9[i]>ema21[i];
+  const crossDn = ema9[i-1]!=null && ema21[i-1]!=null && ema9[i-1]>=ema21[i-1] && ema9[i]<ema21[i];
+  const trendUp = a50>a200;
+  const trendDn = a50<a200;
+
+  let enter=null;
+  if(crossUp && trendUp && rsi[i]>50) enter="BUY";
+  if(crossDn && trendDn && rsi[i]<50) enter="SELL";
+
+  const exitBuy = (crossDn || rsi[i]<45);
+  const exitSell = (crossUp || rsi[i]>55);
+
+  return { enter, exitBuy, exitSell };
+}
+function stratMACD(i, ind){
+  const { macd, ema50, ema200 } = ind;
+  if(macd.line[i]==null||macd.signal[i]==null||ema50[i]==null||ema200[i]==null) return null;
+  const trendUp = ema50[i]>ema200[i];
+  const trendDn = ema50[i]<ema200[i];
+
+  const up = macd.line[i-1]<=macd.signal[i-1] && macd.line[i]>macd.signal[i];
+  const dn = macd.line[i-1]>=macd.signal[i-1] && macd.line[i]<macd.signal[i];
+
+  let enter=null;
+  if(up && trendUp) enter="BUY";
+  if(dn && trendDn) enter="SELL";
+
+  const exitBuy = dn;
+  const exitSell = up;
+
+  return { enter, exitBuy, exitSell };
+}
+function stratBB(i, ind){
+  const { bb, rsi, closes } = ind;
+  if(bb.lower[i]==null||bb.upper[i]==null||bb.mid[i]==null||rsi[i]==null) return null;
+  const c = closes[i];
+  let enter=null;
+  if(c < bb.lower[i] && rsi[i] < 40) enter="BUY";
+  if(c > bb.upper[i] && rsi[i] > 60) enter="SELL";
+  const exitBuy = c >= bb.mid[i];
+  const exitSell = c <= bb.mid[i];
+  return { enter, exitBuy, exitSell };
+}
+function stratBreakoutPullback(i, ind){
+  const { sw, closes, ema21 } = ind;
+  if(i<10 || ema21[i]==null) return null;
+
+  let lastSH=null, lastSL=null;
+  for(let k=i-1;k>=0;k--){
+    if(lastSH==null && sw.hi[k]!=null) lastSH = sw.hi[k];
+    if(lastSL==null && sw.lo[k]!=null) lastSL = sw.lo[k];
+    if(lastSH!=null && lastSL!=null) break;
+  }
+  if(lastSH==null && lastSL==null) return null;
+
+  const c = closes[i];
+  const prev = closes[i-1];
+  let enter=null;
+
+  if(lastSH!=null && prev<=lastSH && c>lastSH && c>ema21[i]) enter="BUY";
+  if(lastSL!=null && prev>=lastSL && c<lastSL && c<ema21[i]) enter="SELL";
+
+  const exitBuy = c < ema21[i];
+  const exitSell = c > ema21[i];
+
+  return { enter, exitBuy, exitSell };
+}
+function stratCandles(i, ind){
+  const { patt, rsi } = ind;
+  if(!patt[i] || rsi[i]==null) return null;
+
+  let enter=null;
+  if(patt[i].engulfBull || patt[i].hammer){
+    if(rsi[i]>45) enter="BUY";
+  }
+  if(patt[i].engulfBear){
+    if(rsi[i]<55) enter="SELL";
+  }
+
+  const exitBuy = patt[i].engulfBear || (rsi[i]<45);
+  const exitSell = patt[i].engulfBull || (rsi[i]>55);
+
+  return { enter, exitBuy, exitSell };
+}
+
+/* =========================
+   Backtest
+   ========================= */
+function backtestOne(candles, ind, stratFn, cfg){
+  let pos=null; // { side, entry, sl, tp }
+  let equity=1, peak=1, dd=0;
+  const trades=[];
+  const risk = Number(cfg.risk);
+
+  for(let i=2;i<candles.length;i++){
+    const price = candles[i].close;
+    const a = ind.atr[i] ?? 0;
+    const sig = stratFn(i, ind, candles);
+    if(!sig) continue;
+
+    if(!pos){
+      if(sig.enter==="BUY" || sig.enter==="SELL"){
+        const { slDist, tpDist } = sltp(price, a, cfg.slMode, cfg.tpMode);
+        const sl = (sig.enter==="BUY") ? (price - slDist) : (price + slDist);
+        const tp = (sig.enter==="BUY") ? (price + tpDist) : (price - tpDist);
+        pos = { side:sig.enter, entry:price, sl, tp };
+      }
+      continue;
+    }
+
+    const hi=candles[i].high, lo=candles[i].low;
+    let exit=null;
+
+    if(pos.side==="BUY"){
+      if(lo <= pos.sl) exit = pos.sl;
+      else if(hi >= pos.tp) exit = pos.tp;
+      else if(sig.exitBuy) exit = price;
+      else if(sig.enter==="SELL") exit = price;
+    }else{
+      if(hi >= pos.sl) exit = pos.sl;
+      else if(lo <= pos.tp) exit = pos.tp;
+      else if(sig.exitSell) exit = price;
+      else if(sig.enter==="BUY") exit = price;
+    }
+
+    if(exit!=null){
+      const pnl = (pos.side==="BUY") ? (exit-pos.entry)/pos.entry : (pos.entry-exit)/pos.entry;
+
+      // sizing simple basado en riesgo/sl% (cap a 5x)
+      const slPct = Math.abs((pos.sl - pos.entry)/pos.entry) || 0.001;
+      const leverageLike = Math.min(5, risk / slPct);
+      const adjPnl = pnl * leverageLike;
+
+      equity *= (1 + adjPnl);
+      peak = Math.max(peak, equity);
+      dd = Math.max(dd, (peak-equity)/peak);
+
+      trades.push({ pnl:adjPnl });
+      pos=null;
+    }
+  }
+
+  const wins = trades.filter(t=>t.pnl>0);
+  const losses = trades.filter(t=>t.pnl<=0);
+  const winrate = trades.length ? wins.length/trades.length : 0;
+  const grossWin = wins.reduce((a,t)=>a+t.pnl,0);
+  const grossLossAbs = Math.abs(losses.reduce((a,t)=>a+t.pnl,0));
+  const pf = grossLossAbs ? grossWin/grossLossAbs : (grossWin>0 ? 999 : 0);
+  const ret = (equity-1);
+
+  return { trades, winrate, pf, dd, ret };
+}
+
+function backtestEnsemble(candles, ind, stratFns, cfg, minVotes){
+  let pos=null;
+  let equity=1, peak=1, dd=0;
+  const trades=[];
+  const risk = Number(cfg.risk);
+
+  for(let i=2;i<candles.length;i++){
+    const price=candles[i].close;
+    const a=ind.atr[i] ?? 0;
+
+    const sigs = stratFns.map(fn=>fn(i, ind, candles)).filter(Boolean);
+    const votesBuy = sigs.filter(s=>s.enter==="BUY").length;
+    const votesSell = sigs.filter(s=>s.enter==="SELL").length;
+    const exitBuyVotes = sigs.filter(s=>s.exitBuy).length;
+    const exitSellVotes = sigs.filter(s=>s.exitSell).length;
+
+    if(!pos){
+      if(votesBuy>=minVotes && votesBuy>votesSell){
+        const { slDist, tpDist } = sltp(price, a, cfg.slMode, cfg.tpMode);
+        pos={ side:"BUY", entry:price, sl:price-slDist, tp:price+tpDist };
+      }else if(votesSell>=minVotes && votesSell>votesBuy){
+        const { slDist, tpDist } = sltp(price, a, cfg.slMode, cfg.tpMode);
+        pos={ side:"SELL", entry:price, sl:price+slDist, tp:price-tpDist };
+      }
+      continue;
+    }
+
+    const hi=candles[i].high, lo=candles[i].low;
+    let exit=null;
+
+    if(pos.side==="BUY"){
+      if(lo<=pos.sl) exit=pos.sl;
+      else if(hi>=pos.tp) exit=pos.tp;
+      else if(votesSell>=minVotes || exitBuyVotes>=minVotes) exit=price;
+    }else{
+      if(hi>=pos.sl) exit=pos.sl;
+      else if(lo<=pos.tp) exit=pos.tp;
+      else if(votesBuy>=minVotes || exitSellVotes>=minVotes) exit=price;
+    }
+
+    if(exit!=null){
+      const pnl = (pos.side==="BUY") ? (exit-pos.entry)/pos.entry : (pos.entry-exit)/pos.entry;
+      const slPct = Math.abs((pos.sl - pos.entry)/pos.entry) || 0.001;
+      const leverageLike = Math.min(5, risk / slPct);
+      const adjPnl = pnl * leverageLike;
+
+      equity *= (1 + adjPnl);
+      peak = Math.max(peak, equity);
+      dd = Math.max(dd, (peak-equity)/peak);
+
+      trades.push({ pnl:adjPnl });
+      pos=null;
+    }
+  }
+
+  const wins = trades.filter(t=>t.pnl>0);
+  const losses = trades.filter(t=>t.pnl<=0);
+  const winrate = trades.length ? wins.length/trades.length : 0;
+  const grossWin = wins.reduce((a,t)=>a+t.pnl,0);
+  const grossLossAbs = Math.abs(losses.reduce((a,t)=>a+t.pnl,0));
+  const pf = grossLossAbs ? grossWin/grossLossAbs : (grossWin>0 ? 999 : 0);
+  const ret = (equity-1);
+
+  return { trades, winrate, pf, dd, ret };
+}
+
+/* =========================
+   UI render
+   ========================= */
+function rowHtml(sym, tf, strat, out){
+  const win = out.winrate*100;
+  const dd = out.dd*100;
+  const ret = out.ret*100;
+  const clsRet = ret>=0 ? "good" : "bad";
+  return `
+    <tr>
+      <td><span class="tag">${escapeHtml(sym)}</span></td>
+      <td class="mono">${escapeHtml(tf)}</td>
+      <td>${escapeHtml(strat)}</td>
+      <td class="small">${out.trades.length}</td>
+      <td class="small">${fmt(win,2)}%</td>
+      <td class="small">${fmt(out.pf,2)}</td>
+      <td class="small">${fmt(dd,2)}%</td>
+      <td class="small ${clsRet}">${fmt(ret,2)}%</td>
+    </tr>
+  `;
+}
+function activeStrategies(){
+  const list=[];
+  if($("#sEMA").checked) list.push({ name:"EMA+RSI", fn:(i,ind)=>stratEMA(i,ind) });
+  if($("#sMACD").checked) list.push({ name:"MACD", fn:(i,ind)=>stratMACD(i,ind) });
+  if($("#sBB").checked) list.push({ name:"Bollinger", fn:(i,ind)=>stratBB(i,ind) });
+  if($("#sBR").checked) list.push({ name:"Breakout/PB", fn:(i,ind)=>stratBreakoutPullback(i,ind) });
+  if($("#sC").checked) list.push({ name:"Candle", fn:(i,ind)=>stratCandles(i,ind) });
+  return list;
+}
+
+/* =========================
+   Run
+   ========================= */
+let stopFlag=false;
+let lastExport=null;
+
+async function run(){
+  stopFlag=false;
+  $("#btnRun").disabled=true;
+  $("#btnStop").disabled=false;
+  $("#btnExport").disabled=true;
+  $("#tbl tbody").innerHTML="";
+  $("#log").value="";
+  $("#err").textContent="errores: 0";
+
+  const limit=Math.max(200, Number($("#limit").value)||800);
+  const risk=$("#risk").value;
+  const slMode=$("#slMode").value;
+  const tpMode=$("#tpMode").value;
+  const votes=Math.max(2, Number($("#ensembleVotes").value)||2);
+
+  const mode=$("#dataMode").value;
+  const key=$("#twelveKey").value.trim();
+
+  const tfs = selectedTFs();
+  const symsRaw = $("#symbols").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const strats = activeStrategies();
+
+  $("#kSyms").textContent = symsRaw.length;
+  $("#kTFs").textContent = tfs.length;
+  $("#kStrats").textContent = strats.length;
+
+  if(!symsRaw.length){ toast("Config","Agrega símbolos.","warn"); $("#btnRun").disabled=false; $("#btnStop").disabled=true; return; }
+  if(!tfs.length){ toast("Config","Selecciona al menos 1 timeframe.","warn"); $("#btnRun").disabled=false; $("#btnStop").disabled=true; return; }
+  if(!strats.length){ toast("Config","Activa al menos 1 estrategia.","warn"); $("#btnRun").disabled=false; $("#btnStop").disabled=true; return; }
+
+  // Si hay no-cripto y modo permite TwelveData, exige key
+  if(mode!=="binanceOnly"){
+    const needKey = symsRaw.some(s=>!isCrypto(normalizeForexPair(s)));
+    if(needKey && !key){
+      toast("TwelveData","Falta API Key para divisas/XAU/índices.","bad");
+      $("#btnRun").disabled=false; $("#btnStop").disabled=true;
+      return;
+    }
+  }
+
+  setStatus("resolviendo símbolos…", "rgba(255,204,102,.95)");
+  log(`Resolviendo símbolos...`);
+  const symsResolved = [];
+  for(const s of symsRaw){
+    if(stopFlag) break;
+    const r = await resolveSymbol(s, mode, key);
+    if(r?.resolved) symsResolved.push(r.resolved);
+  }
+  if(stopFlag){
+    setStatus("detenido", "rgba(255,92,122,.95)");
+    $("#btnRun").disabled=false; $("#btnStop").disabled=true;
+    return;
+  }
+  log(`Símbolos a procesar: ${symsResolved.join(", ")}`);
+
+  setStatus("corriendo…", "rgba(255,204,102,.95)");
+  log(`Iniciando backtest: TFs=${tfs.join(",")} velas=${limit} símbolos=${symsResolved.length} estrategias=${strats.length} ensembleVotes=${votes}`);
+
+  const cfg={ risk, slMode, tpMode };
+  const rows=[];
+  let processed=0, errors=0;
+  const totalWork = symsResolved.length * tfs.length;
+
+  // Secuencial para evitar rate limits
+  for(const tf of tfs){
+    for(const sym of symsResolved){
+      if(stopFlag) break;
+
+      $("#prog").textContent = `${processed}/${totalWork}`;
+      log(`Descargando ${sym} @ ${tf}…`);
+
+      try{
+        const candles = await fetchCandles(sym, tf, limit, mode, key);
+        if(candles.length < 120) throw new Error(`Pocas velas (${candles.length}).`);
+
+        const ind = computeIndicators(candles);
+
+        // Individuales
+        for(const st of strats){
+          const out = backtestOne(candles, ind, (i,ind2)=>st.fn(i,ind2), cfg);
+          rows.push({ sym, tf, strat: st.name, out });
+        }
+
+        // Ensemble
+        const fns = strats.map(s=> (i,ind2)=>s.fn(i,ind2));
+        const ens = backtestEnsemble(candles, ind, fns, cfg, votes);
+        rows.push({ sym, tf, strat: `Ensemble(${votes}v)`, out: ens });
+
+        processed++;
+        $("#prog").textContent = `${processed}/${totalWork}`;
+
+        // Anti rate-limit: TwelveData suele requerir pausas
+        await sleep(isCrypto(sym) ? 220 : 520);
+      }catch(e){
+        errors++;
+        $("#err").textContent = `errores: ${errors}`;
+        log(`ERROR ${sym} @ ${tf}: ${e.message || e}`);
+        toast("Error", `${sym} ${tf}: ${e.message || e}`, "bad");
+        await sleep(650);
+      }
+    }
+    if(stopFlag) break;
+  }
+
+  // Render
+  rows.sort((a,b)=> (b.out.ret - a.out.ret));
+  $("#tbl tbody").innerHTML = rows.map(r=>rowHtml(r.sym, r.tf, r.strat, r.out)).join("");
+
+  // KPI agregado: ensemble promedio
+  const ensRows = rows.filter(r=>String(r.strat).startsWith("Ensemble"));
+  if(ensRows.length){
+    const avgRet = ensRows.reduce((a,r)=>a+r.out.ret,0)/ensRows.length;
+    const avgDD  = ensRows.reduce((a,r)=>a+r.out.dd,0)/ensRows.length;
+    const cls = avgRet>=0 ? "good":"bad";
+    $("#kEns").innerHTML = `<span class="${cls}">${fmt(avgRet*100,2)}%</span> / <span class="warn">${fmt(avgDD*100,2)}%</span>`;
+  }else{
+    $("#kEns").textContent="—";
+  }
+
+  lastExport = {
+    createdAt: nowISO(),
+    timeframes: tfs,
+    limit, cfg, mode,
+    symbols: symsResolved,
+    strategies: strats.map(s=>s.name),
+    votes,
+    results: rows.map(r=>({
+      symbol:r.sym, tf:r.tf, strategy:r.strat,
+      trades:r.out.trades.length,
+      winrate:r.out.winrate,
+      pf:r.out.pf,
+      dd:r.out.dd,
+      ret:r.out.ret
+    }))
+  };
+  $("#btnExport").disabled = !rows.length;
+
+  if(stopFlag){
+    setStatus("detenido", "rgba(255,92,122,.95)");
+    toast("Backtest","Detenido por el usuario.","warn");
+  }else{
+    setStatus("completo", "rgba(25,211,162,.95)");
+    toast("Backtest","Finalizado. Tabla ordenada por retorno (mejor arriba).","good");
+  }
+
+  $("#btnRun").disabled=false;
+  $("#btnStop").disabled=true;
+}
+
+function exportJSON(){
+  if(!lastExport) return;
+  const content = JSON.stringify(lastExport, null, 2);
+  const blob = new Blob([content], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url;
+  a.download=`backtest_multiTF_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Export","JSON descargado.","good");
+}
+
+/* =========================
+   Wire
+   ========================= */
+renderTFGrid();
+setStatus("listo", "rgba(169,183,229,.95)");
+toast("Listo","Dale “Resolver símbolos” (recomendado) y luego “Correr Backtest”.","good");
+
+$("#btnResolve").addEventListener("click", resolveAllSymbols);
+$("#btnRun").addEventListener("click", run);
+$("#btnStop").addEventListener("click", ()=>{
+  stopFlag=true;
+  setStatus("deteniendo…", "rgba(255,204,102,.95)");
+});
+$("#btnExport").addEventListener("click", exportJSON);
+
+</script>
+
+<!-- FIN -->
+</body>
+</html>
