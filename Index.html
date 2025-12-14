@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulador Multi-Activos — Backtest (TODOS TF) | Estrategias Simultáneas</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1a33; --panel2:#0c1730;
+      --text:#e8eefc; --muted:#a9b7e5; --line:#24335f;
+      --accent:#7c5cff; --good:#19d3a2; --bad:#ff5c7a; --warn:#ffcc66;
+      --shadow: 0 10px 24px rgba(0,0,0,.35);
+      --r:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans);
+      background:radial-gradient(1200px 700px at 20% 0%, #111d3b 0%, var(--bg) 55%, #070b14 100%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:5;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.75);
+      border-bottom:1px solid rgba(36,51,95,.55);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:14px;}
+    .topbar{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+    .brand{display:flex; align-items:center; gap:10px; user-select:none;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, #7c5cff 0%, #19d3a2 100%);
+      box-shadow: 0 10px 24px rgba(124,92,255,.25);
+    }
+    .brand h1{font-size:16px; margin:0; letter-spacing:.2px}
+    .brand .sub{font-size:12px; color:var(--muted); margin-top:2px}
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start;}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background: linear-gradient(180deg, rgba(15,26,51,.92) 0%, rgba(12,23,48,.92) 100%);
+      border:1px solid rgba(36,51,95,.65);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .head{
+      padding:12px;
+      border-bottom:1px solid rgba(36,51,95,.55);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card h2{margin:0; font-size:13px; letter-spacing:.3px; color: var(--muted);}
+    .card .body{padding:12px}
+    label{font-size:11px; color:var(--muted); display:block; margin-bottom:6px}
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(36,51,95,.75);
+      background: rgba(11,18,32,.55);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height:120px; resize:vertical; font-family:var(--mono); font-size:12px}
+    .btn{
+      border:1px solid rgba(36,51,95,.75);
+      background: rgba(124,92,255,.14);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      transition:.15s ease;
+      font-weight:700;
+      box-shadow: 0 8px 18px rgba(124,92,255,.12);
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(124,92,255,.20)}
+    .btn:active{transform: translateY(0px)}
+    .btn.secondary{background: rgba(25,211,162,.12); box-shadow: 0 8px 18px rgba(25,211,162,.10)}
+    .btn.danger{background: rgba(255,92,122,.12); box-shadow: 0 8px 18px rgba(255,92,122,.10)}
+    .btn.ghost{background: rgba(11,18,32,.35); box-shadow:none}
+    .btn:disabled{opacity:.5; cursor:not-allowed; transform:none}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:stretch}
+    .inputs{display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:10px;}
+    @media (max-width: 980px){ .inputs{grid-template-columns: repeat(2, minmax(0, 1fr));} }
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(36,51,95,.65);
+      background: rgba(11,18,32,.5);
+      color:var(--muted);
+      display:inline-flex; align-items:center; gap:8px;
+      font-family: var(--mono);
+      white-space:nowrap;
+    }
+    .hr{height:1px; background: rgba(36,51,95,.55); margin:12px 0}
+    .hint{font-size:12px; color:rgba(169,183,229,.78); line-height:1.35}
+    .note{
+      font-size:12px; color:rgba(169,183,229,.78);
+      border-left:3px solid rgba(124,92,255,.6);
+      padding:10px 12px; background: rgba(11,18,32,.35); border-radius:14px;
+    }
+    .kpis{display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px;}
+    @media (max-width: 980px){ .kpis{grid-template-columns: repeat(2, minmax(0, 1fr))} }
+    .kpi{
+      padding:10px; border-radius:16px;
+      border:1px solid rgba(36,51,95,.65);
+      background: rgba(11,18,32,.35);
+    }
+    .kpi .t{font-size:11px; color:var(--muted)}
+    .kpi .v{font-family:var(--mono); font-size:15px; margin-top:4px}
+    .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+    table{width:100%; border-collapse:collapse; font-size:12px}
+    th, td{padding:8px 8px; border-bottom:1px solid rgba(36,51,95,.45); vertical-align:top}
+    th{color:var(--muted); font-weight:700; text-align:left}
+    .tag{
+      font-family:var(--mono);
+      padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(36,51,95,.65);
+      background: rgba(11,18,32,.35);
+      display:inline-block;
+      white-space:nowrap;
+    }
+    .small{font-size:12px}
+    #toasts{
+      position:fixed; right:14px; bottom:14px; z-index:1000;
+      display:flex; flex-direction:column; gap:10px; width:min(420px, calc(100vw - 28px));
+    }
+    .toast{
+      border-radius:18px; padding:12px 12px;
+      border:1px solid rgba(36,51,95,.75);
+      background: rgba(15,26,51,.92);
+      box-shadow: var(--shadow);
+    }
+    .toast .title{font-weight:900; letter-spacing:.2px}
+    .toast .msg{color:var(--muted); font-size:12px; margin-top:4px; line-height:1.25}
+    .tfGrid{display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:10px;}
+    @media (max-width: 980px){ .tfGrid{grid-template-columns: repeat(3, minmax(0, 1fr));} }
+    .tfChip{
+      border:1px solid rgba(36,51,95,.65);
+      border-radius:14px;
+      padding:8px 10px;
+      background: rgba(11,18,32,.35);
+      cursor:pointer;
+      user-select:none;
+      display:flex; gap:8px; align-items:center; justify-content:flex-start;
+      font-size:12px;
+      color: var(--muted);
+    }
+    .tfChip input{width:auto}
+    .mono{font-family:var(--mono)}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Simulador Multi-Activos (Paper Trading)</h1>
+          <div class="sub">Backtest simultáneo — TODOS los timeframes — sin comisiones/spread</div>
+        </div>
+      </div>
+      <div class="row">
+        <span id="statusPill" class="pill">● listo</span>
+        <button id="btnResolve" class="btn ghost">Resolver símbolos</button>
+        <button id="btnRun" class="btn secondary">Correr Backtest</button>
+        <button id="btnStop" class="btn danger" disabled>Detener</button>
+        <button id="btnExport" class="btn ghost" disabled>Exportar JSON</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <!-- CONFIG -->
+    <section class="card">
+      <div class="head">
+        <h2>Configuración</h2>
+        <span class="pill">Datos: Binance (cripto) + TwelveData (divisas/XAU/índices)</span>
+      </div>
+      <div class="body">
+
+        <div class="inputs">
+          <div>
+            <label>Velas por símbolo (por TF)</label>
+            <input id="limit" type="number" min="200" step="100" value="800" />
+          </div>
+          <div>
+            <label>Riesgo por trade (solo simulación)</label>
+            <select id="risk">
+              <option value="0.005">0.5%</option>
+              <option value="0.01" selected>1.0%</option>
+              <option value="0.02">2.0%</option>
+            </select>
+          </div>
+          <div>
+            <label>SL</label>
+            <select id="slMode">
+              <option value="atr" selected>ATR(14) x 1.5</option>
+              <option value="pct">1.0%</option>
+            </select>
+          </div>
+          <div>
+            <label>TP</label>
+            <select id="tpMode">
+              <option value="rr" selected>R:R 1:2</option>
+              <option value="pct">2.0%</option>
+            </select>
+          </div>
+          <div>
+            <label>Votos (Ensemble)</label>
+            <select id="ensembleVotes">
+              <option value="2" selected>2 estrategias alineadas</option>
+              <option value="3">3 estrategias alineadas</option>
+              <option value="4">4 estrategias alineadas</option>
+            </select>
+          </div>
+          <div>
+            <label>Modo datos</label>
+            <select id="dataMode">
+              <option value="auto" selected>Auto</option>
+              <option value="binanceOnly">Solo Binance (solo cripto)</option>
+              <option value="twelveOnly">Solo TwelveData</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <label>Timeframes (selecciona TODOS)</label>
+        <div class="tfGrid" id="tfGrid"></div>
+        <div class="hint">Por defecto vienen todos activados (como pediste).</div>
+
+        <div class="hr"></div>
+
+        <label>Lista de símbolos (uno por línea)</label>
+        <textarea id="symbols">BTCUSDT
+ETHUSDT
+XRPUSDT
+XAUUSD
+EURUSD
+GBPUSD
+NAS100</textarea>
+
+        <div class="hint">
+          Normalización automática:
+          <span class="tag">EURUSD→EUR/USD</span>,
+          <span class="tag">GBPUSD→GBP/USD</span>,
+          <span class="tag">XAUUSD→XAU/USD</span>.
+          NAS100 se intenta resolver vía TwelveData symbol_search.
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="align-items:flex-end;">
+          <div style="flex:1">
+            <label>API Key TwelveData (divisas/XAU/índices)</label>
+            <input id="twelveKey" value="5a95ae8e4a0946c885464dc1f068ff39" />
+            <div class="hint">
+              Si haces repo público, evita dejar la key visible. (Para investigación privada está ok.)
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <details open>
+          <summary class="hint">⚙️ Estrategias activas (todas)</summary>
+          <div class="hr"></div>
+          <div class="inputs" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+            <label class="pill" style="cursor:pointer;"><input id="sEMA" type="checkbox" checked style="margin-right:6px"> EMA+RSI (tendencia)</label>
+            <label class="pill" style="cursor:pointer;"><input id="sMACD" type="checkbox" checked style="margin-right:6px"> MACD trend</label>
+            <label class="pill" style="cursor:pointer;"><input id="sBB" type="checkbox" checked style="margin-right:6px"> Bollinger mean-reversion</label>
+            <label class="pill" style="cursor:pointer;"><input id="sBR" type="checkbox" checked style="margin-right:6px"> Breakout + pullback (S/R)</label>
+            <label class="pill" style="cursor:pointer;"><input id="sC" type="checkbox" checked style="margin-right:6px"> Patrones (velas)</label>
+          </div>
+        </details>
+
+        <div class="note" style="margin-top:12px">
+          Backtest aproximado: sin comisiones, slippage ni spreads (como pediste).
+          Cuando veamos rentabilidad y estabilidad por timeframe/símbolo, pasamos a simulación “más real” (spread) y recién después automatización real.
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <aside class="card">
+      <div class="head">
+        <h2>Resultados</h2>
+        <div class="row">
+          <span id="prog" class="pill">0/0</span>
+          <span id="err" class="pill">errores: 0</span>
+        </div>
+      </div>
+      <div class="body">
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="t">Símbolos</div>
+            <div id="kSyms" class="v">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Timeframes</div>
+            <div id="kTFs" class="v">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Estrategias activas</div>
+            <div id="kStrats" class="v">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Ensemble promedio (Ret / DD)</div>
+            <div id="kEns" class="v">—</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <div class="hint">Tabla por símbolo + TF + estrategia</div>
+          <span class="pill">Orden: mejor retorno</span>
+        </div>
+
+        <div style="max-height:520px; overflow:auto; margin-top:10px;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Símbolo</th>
+                <th>TF</th>
+                <th>Estrategia</th>
+                <th>Trades</th>
+                <th>Win%</th>
+                <th>PF</th>
+                <th>DD%</th>
+                <th>Ret%</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="hr"></div>
+
+        <details>
+          <summary class="hint">📦 Log / Debug</summary>
+          <div class="hr"></div>
+          <textarea id="log" placeholder="Eventos, resolución de símbolos, errores y progreso..." style="min-height:160px"></textarea>
+        </details>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div id="toasts"></div>
+
+<script>
+/* =========================
+   Utilidades
+   ========================= */
+const $ = (q, el=document) => el.querySelector(q);
+const fmt = (n,d=2)=> Number.isFinite(n) ? n.toFixed(d) : "—";
+const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
+const nowISO = ()=> new Date().toISOString();
+const isCrypto = (sym)=> /USDT$|BUSD$|USDC$|BTC$|ETH$/.test(sym.toUpperCase()) && !sym.includes("/");
+function toast(title, msg, kind="good"){
+  const el = document.createElement("div");
+  el.className = "toast";
+  const color = kind==="good" ? "rgba(25,211,162,.55)" : kind==="bad" ? "rgba(255,92,122,.55)" : "rgba(255,204,102,.55)";
+  el.style.borderColor = color;
+  el.innerHTML = `<div class="title">${escapeHtml(title)}</div><div class="msg">${escapeHtml(msg)}</div>`;
+  $("#toasts").appendChild(el);
+  setTimeout(()=>el.remove(), 5200);
+}
+function escapeHtml(s=""){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function log(msg){
+  const box = $("#log");
+  box.value = `[${new Date().toLocaleTimeString()}] ${msg}\n` + box.value;
+}
+function setStatus(text, color){
+  const p=$("#statusPill");
+  p.textContent="● "+text;
+  p.style.color = color || "rgba(169,183,229,.95)";
+}
+
+/* =========================
+   Timeframes UI
+   ========================= */
+const ALL_TFS = ["1m","5m","15m","1h","4h","1d"];
+function renderTFGrid(){
+  const grid = $("#tfGrid");
+  grid.innerHTML = "";
+  for(const tf of ALL_TFS){
+    const id = `tf_${tf}`;
+    const div = document.createElement("label");
+    div.className = "tfChip";
+    div.innerHTML = `<input type="checkbox" id="${id}" checked> <span class="mono">${tf}</span>`;
+    grid.appendChild(div);
+  }
+}
+function selectedTFs(){
+  return ALL_TFS.filter(tf => $(`#tf_${tf}`)?.checked);
+}
+
+/* =========================
+   Datos: Binance + TwelveData
+   ========================= */
+async function fetchBinanceKlines(symbol, interval, limit){
+  const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`Binance klines error (${res.status})`);
+  const data = await res.json();
+  return data.map(k=>({
+    time: Math.floor(k[0]/1000),
+    open:+k[1], high:+k[2], low:+k[3], close:+k[4], volume:+k[5]
+  }));
+}
+function mapTfToTwelve(tf){
+  const m = { "1m":"1min","5m":"5min","15m":"15min","1h":"1h","4h":"4h","1d":"1day" };
+  return m[tf] || "15min";
+}
+async function fetchTwelveTimeSeries(symbol, tf, limit, apiKey){
+  const interval = mapTfToTwelve(tf);
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&outputsize=${limit}&apikey=${encodeURIComponent(apiKey)}&format=JSON`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.status === "error") throw new Error(`TwelveData: ${data.message || "error"}`);
+  const values = (data.values || []).slice().reverse();
+  return values.map(v=>({
+    time: Math.floor(new Date(v.datetime).getTime()/1000),
+    open:+v.open, high:+v.high, low:+v.low, close:+v.close,
+    volume: v.volume ? +v.volume : 0
+  }));
+}
+async function twelveSymbolSearch(query, apiKey){
+  const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=${encodeURIComponent(apiKey)}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.status === "error") throw new Error(`symbol_search: ${data.message || "error"}`);
+  return data.data || [];
+}
+async function fetchCandles(sym, tf, limit, mode, twelveKey){
+  const crypto = isCrypto(sym);
+  if(mode==="binanceOnly"){
+    if(!crypto) throw new Error("Modo BinanceOnly: símbolo no cripto.");
+    return await fetchBinanceKlines(sym, tf, limit);
+  }
+  if(mode==="twelveOnly"){
+    if(!twelveKey) throw new Error("Falta API key TwelveData.");
+    return await fetchTwelveTimeSeries(sym, tf, limit, twelveKey);
+  }
+  // auto
+  if(crypto) return await fetchBinanceKlines(sym, tf, limit);
+  if(!twelveKey) throw new Error("Falta API key TwelveData para divisas/XAU/índices.");
+  return await fetchTwelveTimeSeries(sym, tf, limit, twelveKey);
+}
+
+/* =========================
+   Normalización + Resolución de símbolos
+   ========================= */
+function normalizeForexPair(sym){
+  // EURUSD -> EUR/USD, GBPUSD -> GBP/USD, XAUUSD -> XAU/USD, etc.
+  const s = sym.toUpperCase().trim();
+  if(s.includes("/")) return s;
+  if(/^[A-Z]{6}$/.test(s)) return `${s.slice(0,3)}/${s.slice(3,6)}`;
+  return s;
+}
+async function resolveSymbol(sym, mode, twelveKey){
+  let s = sym.trim().toUpperCase();
+  if(!s) return null;
+
+  // Cripto: Binance expects no slash
+  if(isCrypto(s)) return { raw:sym, resolved:s, provider:"binance" };
+
+  // XAUUSD / EURUSD / GBPUSD normalization
+  const normalized = normalizeForexPair(s);
+  s = normalized;
+
+  // NAS100 special case: try symbol_search if TwelveData enabled
+  if(s==="NAS100" || s==="NAS100USD" || s==="NAS100/US" || s==="NAS100/USD"){
+    if(mode!=="binanceOnly" && twelveKey){
+      try{
+        const candidates = [
+          ...await twelveSymbolSearch("NASDAQ 100", twelveKey),
+          ...await twelveSymbolSearch("NAS100", twelveKey),
+          ...await twelveSymbolSearch("NDX", twelveKey),
+        ];
+
+        // Heurística: preferir type Index / Indices; si no, tomar el primero
+        const pick = candidates.find(c => String(c.instrument_type||"").toLowerCase().includes("index"))
+                  || candidates.find(c => String(c.type||"").toLowerCase().includes("index"))
+                  || candidates[0];
+
+        if(pick?.symbol){
+          log(`NAS100 resuelto vía symbol_search -> ${pick.symbol} (${pick.instrument_type || pick.type || "?"})`);
+          return { raw:sym, resolved: pick.symbol.toUpperCase(), provider:"twelve", meta:pick };
+        }
+      }catch(e){
+        log(`symbol_search falló para NAS100: ${e.message || e}`);
+      }
+    }
+    // Fallback (no garantizado): NDX
+    log("NAS100 fallback -> NDX (si falla, usa Resolver símbolos y revisa log).");
+    return { raw:sym, resolved:"NDX", provider:"twelve" };
+  }
+
+  // Para todo lo demás no-cripto: TwelveData (auto/twelveOnly)
+  return { raw:sym, resolved:s, provider:"twelve" };
+}
+
+async function resolveAllSymbols(){
+  const mode = $("#dataMode").valu
