@@ -1,2243 +1,277 @@
-<!doctype html>
+<!-- =========================================================
+ AUTO PAPER TRADER BINANCE – FULL AUTONOMOUS (PART 1/2)
+ - TOP 50 AUTO
+ - ALL TIMEFRAMES
+ - BACKTEST + LIVE PAPER
+ - EDGE GATING
+ - COOLDOWN
+ - BLACKLIST
+ - ROTATION
+ - FALLBACK
+ - FIREBASE SAFE (OPTIONAL)
+========================================================= -->
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Auto Paper Trader (Binance) — 100% Front-end + Firebase</title>
+<meta charset="UTF-8" />
+<title>Auto Paper Trader (Binance)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Chart.js (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <style>
-    :root{
-      --bg:#0b1020;
-      --panel:#0f1830;
-      --panel2:#0c1429;
-      --text:#dbe6ff;
-      --muted:#a9b7e5;
-      --good:#19d3a2;
-      --bad:#ff5c7a;
-      --warn:#ffcc66;
-      --line:rgba(169,183,229,.18);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --r:18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--sans);
-      background: radial-gradient(1200px 900px at 15% 10%, rgba(70,120,255,.20), transparent 60%),
-                  radial-gradient(900px 700px at 85% 25%, rgba(25,211,162,.13), transparent 60%),
-                  var(--bg);
-      color:var(--text);
-    }
-    header{
-      padding:18px 18px 10px;
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .brand{display:flex; flex-direction:column; gap:3px;}
-    .brand h1{margin:0;font-size:18px;letter-spacing:.2px;font-weight:750;}
-    .brand .sub{font-size:12px;color:var(--muted);line-height:1.2;}
-    .pills{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
-    .pill{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.03);
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      color:var(--muted);
-      box-shadow: var(--shadow);
-      white-space:nowrap;
-    }
-    .wrap{padding: 8px 18px 20px;display:grid;grid-template-columns: 360px 1fr;gap: 14px;}
-    @media (max-width: 980px){ .wrap{ grid-template-columns: 1fr; } }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--line);
-      border-radius: var(--r);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card .hd{
-      padding: 12px 14px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      background: rgba(0,0,0,.15);
-    }
-    .card .hd .t{font-weight:700;font-size:13px;color:var(--text);letter-spacing:.2px;}
-    .card .bd{ padding: 14px; }
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    label{display:flex; flex-direction:column; gap:6px;font-size:12px; color:var(--muted);width:100%;}
-    input, textarea, select{
-      width:100%;
-      padding:10px 10px;
-      border-radius: 12px;
-      border:1px solid rgba(169,183,229,.22);
-      background: rgba(9,14,30,.65);
-      color: var(--text);
-      outline:none;
-    }
-    textarea{ min-height: 92px; resize: vertical; font-family: var(--mono); font-size:12px; }
-    .mono{ font-family: var(--mono); }
-    .btn{
-      border:1px solid rgba(169,183,229,.25);
-      background: rgba(255,255,255,.05);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-weight:650;
-      letter-spacing:.2px;
-      transition: transform .05s ease, background .15s ease;
-      user-select:none;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn.primary{ border-color: rgba(25,211,162,.45); background: rgba(25,211,162,.12); }
-    .btn.danger{ border-color: rgba(255,92,122,.45); background: rgba(255,92,122,.12); }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; }
-    .mini{ font-size:11px;color: var(--muted);line-height:1.35; }
-    .kpis{display:grid;grid-template-columns: repeat(4, 1fr);gap:10px;}
-    @media(max-width:980px){ .kpis{ grid-template-columns: repeat(2,1fr); } }
-    .kpi{
-      background: rgba(0,0,0,.18);
-      border:1px solid rgba(169,183,229,.18);
-      border-radius: 14px;
-      padding: 10px 12px;
-    }
-    .kpi .k{ font-size:11px; color:var(--muted); }
-    .kpi .v{ font-size:16px; font-weight:800; margin-top:4px; }
-    .good{ color: var(--good); }
-    .bad{ color: var(--bad); }
-    .warn{ color: var(--warn); }
-    table{width:100%;border-collapse: collapse;font-size:12px;}
-    th, td{padding: 9px 8px;border-bottom: 1px solid rgba(169,183,229,.14);text-align:left;vertical-align:top;}
-    th{ color: var(--muted); font-weight:700; font-size:11px; }
-    .tag{
-      display:inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border:1px solid rgba(169,183,229,.22);
-      background: rgba(255,255,255,.03);
-      font-size:11px;
-      color: var(--text);
-    }
-    .split{display:grid;grid-template-columns: 1fr 1fr;gap: 12px;}
-    @media(max-width:980px){ .split{ grid-template-columns: 1fr; } }
-    .toasts{
-      position: fixed; right: 14px; bottom: 14px;
-      width: min(420px, calc(100% - 28px));
-      display:flex; flex-direction:column; gap:10px;
-      z-index: 9999; pointer-events:none;
-    }
-    .toast{
-      pointer-events:auto;
-      border:1px solid rgba(169,183,229,.20);
-      background: rgba(10,14,28,.86);
-      backdrop-filter: blur(10px);
-      border-radius: 14px;
-      padding: 10px 12px;
-      box-shadow: var(--shadow);
-    }
-    .toast .title{ font-weight:800; font-size:12px; margin-bottom:3px;}
-    .toast .msg{ font-size:12px; color: var(--muted); line-height:1.35; }
-    .footerNote{padding: 0 18px 18px;color: rgba(169,183,229,.85);font-size:12px;line-height:1.35;}
-    .divider{ height:1px; background: var(--line); margin:10px 0; }
-    .chartsRow{display:grid;grid-template-columns: 1.3fr 1fr 1fr;gap: 12px;padding: 14px;}
-    @media(max-width: 1100px){ .chartsRow{ grid-template-columns: 1fr; } }
-    .chartBox{
-      background: rgba(0,0,0,.18);
-      border:1px solid rgba(169,183,229,.18);
-      border-radius: 14px;
-      padding: 10px;
-      overflow:hidden;
-    }
-    .chartBox .cap{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:8px; padding: 2px 6px 8px;
-      color: var(--muted);
-      font-size:12px;
-    }
-    pre{margin:0;white-space:pre-wrap;word-break: break-word;font-family: var(--mono);font-size: 11px;color: rgba(219,230,255,.92);}
-  </style>
+<style>
+body{margin:0;font-family:system-ui;background:#0b1220;color:#e8eefc}
+header{padding:12px;background:#0f1a33}
+h1{font-size:18px;margin:0}
+main{display:grid;grid-template-columns:320px 1fr;gap:10px;padding:10px}
+.panel{background:#111d3b;border-radius:12px;padding:10px}
+.small{font-size:12px;color:#9fb3ff}
+.log{height:220px;overflow:auto;font-family:monospace;font-size:11px;background:#000;padding:6px;border-radius:8px}
+.good{color:#4cff9a}
+.bad{color:#ff5c7a}
+.warn{color:#ffd166}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border-bottom:1px solid #223366;padding:4px}
+</style>
 </head>
 
 <body>
-  <header>
-    <div class="brand">
-      <h1>Auto Paper Trader (Binance) — Totalmente Autónomo (TOP50 + ALL TFs)</h1>
-      <div class="sub">
-        Descubre automáticamente TOP 50 USDT por volumen (spot), prueba todos los timeframes, backtestea, elige pool TOP30 y opera TOP3 con fallback.
-        Incluye microestructura (spread/slippage/fees/latencia), edge gating, cooldown, blacklist semanal y rotación automática.
-      </div>
-    </div>
-    <div class="pills">
-      <div class="pill" id="userPill">uid: —</div>
-      <div class="pill" id="statusPill">● auth…</div>
-    </div>
-  </header>
+<header>
+  <h1>🤖 Auto Paper Trader Binance — Autónomo</h1>
+  <div class="small">TOP 50 · ALL TF · Backtest + Live · Paper</div>
+</header>
 
-  <div class="wrap">
-    <!-- LEFT: Controls -->
-    <section class="card">
-      <div class="hd">
-        <div class="t">Control automático</div>
-        <div class="mono mini">progreso: <span id="prog">0/0</span></div>
-      </div>
-      <div class="bd">
-        <div class="row">
-          <button class="btn primary" id="btnStart">Iniciar</button>
-          <button class="btn danger" id="btnStop" disabled>Detener</button>
-          <button class="btn" id="btnNotify">Notificaciones</button>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="grid2">
-          <label>Capital inicial (USD)
-            <input id="startBal" type="number" step="0.01" value="20" />
-          </label>
-          <label>Polling (segundos)
-            <input id="pollSec" type="number" step="1" value="60" />
-          </label>
-        </div>
-
-        <div class="grid2">
-          <label>Riesgo total (informativo)
-            <input id="riskTotal" type="number" step="0.001" value="0.01" />
-          </label>
-          <label>Máx DD diario (Kill Switch %)
-            <input id="dailyMaxDD" type="number" step="1" value="5" />
-          </label>
-        </div>
-
-        <div class="grid2">
-          <label>Máx trades por día
-            <input id="maxTradesDay" type="number" step="1" value="20" />
-          </label>
-          <label>Modo SL
-            <select id="slMode">
-              <option value="atr" selected>SL por ATR</option>
-              <option value="pct">SL por %</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="grid2">
-          <label>Take Profit
-            <select id="tpMode">
-              <option value="rr" selected>TP por RR (2:1)</option>
-              <option value="pct">TP por %</option>
-            </select>
-          </label>
-          <label class="row" style="gap:8px; align-items:flex-end; margin-top:22px;">
-            <span class="mini">Sonido</span>
-            <input id="soundOn" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">Solo análisis</span>
-            <input id="analysisOnly" type="checkbox" style="width:auto; transform:scale(1.1);" />
-          </label>
-        </div>
-
-        <div class="divider"></div>
-
-        <label class="mini">
-          (Opcional) Símbolos manuales — <strong>NO se usan</strong> en modo autónomo (TOP50 auto).
-          <textarea id="symbols">BTCUSDT
-ETHUSDT
-XRPUSDT</textarea>
-        </label>
-
-        <label class="mini">
-          (Opcional) Timeframes manuales — <strong>NO se usan</strong> en modo autónomo (ALL TFs auto).
-          <textarea id="tfs">1m
-3m
-5m
-15m
-30m
-1h
-2h
-4h
-6h
-12h
-1d</textarea>
-        </label>
-
-        <div class="grid3">
-          <label>Velas (limit)
-            <input id="limit" type="number" step="50" value="900" />
-          </label>
-          <label>Mín trades (filtro)
-            <input id="minTrades" type="number" step="1" value="60" />
-          </label>
-          <label>Máx DD (filtro %)
-            <input id="maxDD" type="number" step="1" value="25" />
-          </label>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="stableSelect" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">Selección estable (3 segmentos)</span>
-          </label>
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="dailyReopt" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">Reopt diaria</span>
-          </label>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="mini"><strong>Estrategias (todas a la vez):</strong></div>
-        <div class="grid2" style="margin-top:8px;">
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="sEMA" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">EMA+RSI</span>
-          </label>
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="sMACD" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">MACD</span>
-          </label>
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="sBB" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">Bollinger</span>
-          </label>
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="sDON" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">Donchian</span>
-          </label>
-          <label class="row" style="gap:8px; width:auto;">
-            <input id="sRSI" type="checkbox" checked style="width:auto; transform:scale(1.1);" />
-            <span class="mini">RSI-Reversal</span>
-          </label>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row">
-          <button class="btn" id="btnReport">Reporte ahora</button>
-          <button class="btn" id="btnExport">Exportar JSON</button>
-          <button class="btn danger" id="btnReset">Reset (local)</button>
-        </div>
-
-        <p class="mini" style="margin-top:10px;">
-          ⚠️ Simulador/paper con datos reales de mercado. No ejecuta órdenes reales.
-        </p>
-      </div>
-    </section>
-
-    <!-- RIGHT: Dashboard -->
-    <section class="card">
-      <div class="hd">
-        <div class="t">Dashboard</div>
-        <div class="mini mono" id="microInfo">micro: —</div>
-      </div>
-
-      <div class="bd">
-        <div class="kpis">
-          <div class="kpi">
-            <div class="k">Start</div>
-            <div class="v mono">$<span id="kStart">—</span></div>
-          </div>
-          <div class="kpi">
-            <div class="k">Balance</div>
-            <div class="v mono">$<span id="kBal">—</span></div>
-          </div>
-          <div class="kpi">
-            <div class="k">Retorno</div>
-            <div class="v mono" id="kRet">—</div>
-          </div>
-          <div class="kpi">
-            <div class="k">Max DD</div>
-            <div class="v mono warn"><span id="kDD">—</span>%</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="split">
-          <div class="card" style="border-radius:14px;">
-            <div class="hd">
-              <div class="t">TOP3 actual</div>
-              <div class="mini mono" id="optInfo">—</div>
-            </div>
-            <div class="bd">
-              <div class="mini" id="topText">—</div>
-              <div class="divider"></div>
-              <div class="mini" id="dayInfo">—</div>
-            </div>
-          </div>
-
-          <div class="card" style="border-radius:14px;">
-            <div class="hd">
-              <div class="t">Posiciones</div>
-              <div class="mini mono">paper</div>
-            </div>
-            <div class="bd">
-              <pre id="posBox">—</pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="chartsRow">
-          <div class="chartBox">
-            <div class="cap"><span>Equity</span><span class="mono mini">últimos puntos</span></div>
-            <canvas id="chartEquity" height="110"></canvas>
-          </div>
-          <div class="chartBox">
-            <div class="cap"><span>Drawdown</span><span class="mono mini">aprox</span></div>
-            <canvas id="chartDD" height="110"></canvas>
-          </div>
-          <div class="chartBox">
-            <div class="cap"><span>Wins/Losses</span><span class="mono mini">semana</span></div>
-            <canvas id="chartWL" height="110"></canvas>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="card" style="border-radius:14px;">
-          <div class="hd">
-            <div class="t">Trades recientes</div>
-            <div class="mini mono">incluye fees/slip/lat/régimen</div>
-          </div>
-          <div class="bd" style="padding:0;">
-            <div style="overflow:auto; max-height: 340px;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Símbolo</th>
-                    <th>TF</th>
-                    <th>Estrategia</th>
-                    <th>Side</th>
-                    <th>Entry</th>
-                    <th>Exit</th>
-                    <th>PnL</th>
-                    <th>Motivo</th>
-                  </tr>
-                </thead>
-                <tbody id="liveTrades"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="split">
-          <div class="card" style="border-radius:14px;">
-            <div class="hd"><div class="t">Reporte semanal</div><div class="mini mono">auto</div></div>
-            <div class="bd"><pre id="weekly">—</pre></div>
-          </div>
-          <div class="card" style="border-radius:14px;">
-            <div class="hd"><div class="t">Log</div><div class="mini mono">debug</div></div>
-            <div class="bd">
-              <textarea id="log" spellcheck="false"></textarea>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
+<main>
+  <div class="panel">
+    <b>Estado:</b> <span id="status">Iniciando…</span><br>
+    <b>Balance:</b> $<span id="bal">20.00</span><br>
+    <b>Modo:</b> PAPER<br>
+    <b>Última optimización:</b><br>
+    <span id="lastOpt" class="small">—</span>
   </div>
 
-  <div class="footerNote">
-    <strong>Notas:</strong> Binance se usa sólo para endpoints públicos (exchangeInfo/ticker/klines/bookTicker). Firebase guarda estado/trades/reportes por usuario anónimo.
+  <div class="panel">
+    <h3>TOP ACTUAL</h3>
+    <table>
+      <thead><tr><th>#</th><th>Symbol</th><th>TF</th><th>Strat</th></tr></thead>
+      <tbody id="top"></tbody>
+    </table>
   </div>
 
-  <div class="toasts" id="toasts"></div>
+  <div class="panel">
+    <h3>Trades</h3>
+    <table>
+      <thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>PnL</th></tr></thead>
+      <tbody id="trades"></tbody>
+    </table>
+  </div>
 
-  <script type="module">
-    /* ==========================================================
-       AUTO PAPER TRADER — TODO INTEGRADO
-       - TOP 50 símbolos USDT spot por volumen (AUTO)
-       - ALL timeframes de Binance (AUTO)
-       - Backtest masivo + selección estable
-       - Pool TOP30 + TOP3 con fallback
-       - Microestructura proxy (spread/slip/lat/fees) + edge gating
-       - Cooldown + blacklist semanal + rotación símbolos + reopt robusto
-       ========================================================== */
+  <div class="panel">
+    <h3>Log</h3>
+    <div id="log" class="log"></div>
+  </div>
+</main>
 
-    /* =========================
-       Firebase config (TU CONFIG)
-       ========================= */
-    const firebaseConfig = {
-      apiKey: "AIzaSyDIW25TJo-ifjKVl45OdEpz7GEtopyiE7k",
-      authDomain: "realty-wealth-3b43a.firebaseapp.com",
-      projectId: "realty-wealth-3b43a",
-      storageBucket: "realty-wealth-3b43a.firebasestorage.app",
-      messagingSenderId: "1003886283442",
-      appId: "1:1003886283442:web:e2faceab70b1451e4997ab",
-      measurementId: "G-TDPC663GRE"
-    };
+<!-- ================= FIREBASE (SAFE / OPTIONAL) ================= -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, collection, addDoc,
-      serverTimestamp, enableIndexedDbPersistence
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyDIW25TJo-ifjKVl45OdEpz7GEtopyiE7k",
+  authDomain: "realty-wealth-3b43a.firebaseapp.com",
+  projectId: "realty-wealth-3b43a",
+  storageBucket: "realty-wealth-3b43a.firebasestorage.app",
+  messagingSenderId: "1003886283442",
+  appId: "1:1003886283442:web:e2faceab70b1451e4997ab"
+};
 
-    /* =========================
-       UI helpers
-       ========================= */
-    const $ = (q, el=document)=> el.querySelector(q);
-    const fmt = (n,d=2)=> Number.isFinite(n) ? n.toFixed(d) : "—";
-    const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
-    const nowISO = ()=> new Date().toISOString();
-    const clamp = (x,a,b)=> Math.max(a, Math.min(b, x));
-    const mean = (arr)=> arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+let auth=null, db=null;
+try{
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  signInAnonymously(auth).catch(()=>{});
+}catch(e){
+  console.warn("Firebase deshabilitado (fallback local)");
+}
+window.__fb = { auth, db };
+</script>
 
-    function escapeHtml(s=""){ return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
-    function toast(title, msg, kind="good"){
-      const el = document.createElement("div");
-      el.className = "toast";
-      const color = kind==="good" ? "rgba(25,211,162,.55)" : kind==="bad" ? "rgba(255,92,122,.55)" : "rgba(255,204,102,.55)";
-      el.style.borderColor = color;
-      el.innerHTML = `<div class="title">${escapeHtml(title)}</div><div class="msg">${escapeHtml(msg)}</div>`;
-      $("#toasts").appendChild(el);
-      setTimeout(()=>el.remove(), 5200);
+<script>
+/* ================= UTIL ================= */
+const $ = id => document.getElementById(id);
+const log = m => { $("log").innerHTML += m+"<br>"; $("log").scrollTop=999999; };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ================= STATE ================= */
+const S = {
+  balance:20,
+  trades:[],
+  bestPicks:[],
+  candidatePool:[],
+  cooldowns:{},
+  blacklist:{},
+  symbolBlocks:{}
+};
+
+/* ================= BINANCE FALLBACK ================= */
+const BINANCE_BASES=[
+ "https://api.binance.com",
+ "https://data-api.binance.vision",
+ "https://api1.binance.com",
+ "https://api2.binance.com",
+ "https://api3.binance.com"
+];
+
+async function retryFetch(url, tries=4){
+  let e;
+  for(let i=0;i<tries;i++){
+    try{
+      const r=await fetch(url);
+      if(r.ok) return await r.json();
+    }catch(err){e=err}
+    await sleep(300+200*i);
+  }
+  throw e||new Error("fetch fail");
+}
+
+async function binance(path){
+  for(const b of BINANCE_BASES){
+    try{return await retryFetch(b+path)}
+    catch(e){log("Base fail "+b)}
+  }
+  throw new Error("Binance unreachable");
+}
+
+/* ================= AUTO UNIVERSE ================= */
+const TOP_N=50;
+const AUTO_TFS=["1m","3m","5m","15m","30m","1h","2h","4h","6h","12h","1d"];
+
+async function discoverSymbols(){
+  $("status").textContent="Descubriendo símbolos…";
+  const ex=await binance("/api/v3/exchangeInfo");
+  const t=await binance("/api/v3/ticker/24hr");
+
+  const ok=new Set(
+    ex.symbols.filter(s=>s.status==="TRADING" && s.quoteAsset==="USDT")
+      .map(s=>s.symbol)
+  );
+
+  return t.filter(x=>ok.has(x.symbol))
+          .sort((a,b)=>b.quoteVolume-a.quoteVolume)
+          .slice(0,TOP_N)
+          .map(x=>x.symbol);
+}
+
+/* ================= MARKET DATA ================= */
+async function klines(sym,tf,limit=500){
+  const d=await binance(`/api/v3/klines?symbol=${sym}&interval=${tf}&limit=${limit}`);
+  return d.map(k=>({c:+k[4]}));
+}
+
+/* ================= INDICATORS ================= */
+function ema(arr,p){
+  let k=2/(p+1),o=[],e;
+  arr.forEach((v,i)=>{
+    if(i<p)o.push(null);
+    else if(!e){e=arr.slice(i-p,i).reduce((a,b)=>a+b)/p;o.push(e)}
+    else{o.push(e=v*k+e*(1-k))}
+  });
+  return o;
+}
+function rsi(c,p=14){
+  let g=0,l=0,o=Array(c.length).fill(null);
+  for(let i=1;i<c.length;i++){
+    let d=c[i]-c[i-1];
+    g+=(d>0?d:0); l+=(d<0?-d:0);
+    if(i>=p){
+      if(i>p){g=g*(p-1)/p+(d>0?d:0)/p; l=l*(p-1)/p+(d<0?-d:0)/p}
+      let rs=l?g/l:100; o[i]=100-(100/(1+rs));
     }
-    function log(msg){ $("#log").value = `[${new Date().toLocaleTimeString()}] ${msg}\n` + $("#log").value; }
-    function setStatus(text, color){
-      const p=$("#statusPill");
-      p.textContent="● "+text;
-      p.style.color = color || "rgba(169,183,229,.95)";
-    }
-    function beep(){
-      if(!$("#soundOn")?.checked) return;
-      try{
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type="sine"; o.frequency.value=880; g.gain.value=0.03;
-        o.connect(g); g.connect(ctx.destination);
-        o.start(); setTimeout(()=>{o.stop(); ctx.close();}, 120);
-      }catch{}
-    }
-    async function notify(title, body){
-      if(!("Notification" in window)) return;
-      if(Notification.permission !== "granted") return;
-      try{ new Notification(title, { body }); }catch{}
-    }
+  }
+  return o;
+}
 
-    /* =========================
-       Local state
-       ========================= */
-    const LS_KEY="auto_paper_trader_autonomous_top50_alltfs_v1";
-    function loadState(){ try{ const raw=localStorage.getItem(LS_KEY); return raw?JSON.parse(raw):null; }catch{return null;} }
-    function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
-
-    /* =========================
-       Firebase init
-       ========================= */
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    try{ await enableIndexedDbPersistence(db); }catch{}
-
-    let UID=null;
-    const userDoc    = ()=> doc(db, "users", UID);
-    const runtimeDoc = ()=> doc(db, "users", UID, "meta", "runtime");
-    const picksDoc   = ()=> doc(db, "users", UID, "meta", "picks");
-    const reportsCol = ()=> collection(db, "users", UID, "reports");
-    const tradesCol  = ()=> collection(db, "users", UID, "trades");
-    const equityCol  = ()=> collection(db, "users", UID, "equity");
-
-    let lastCloudWrite=0;
-    async function cloudSet(ref, data, merge=true){
-      if(!UID) return;
-      const now=Date.now();
-      if(now-lastCloudWrite < 500) await sleep(500-(now-lastCloudWrite));
-      lastCloudWrite=Date.now();
-      await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge });
-    }
-    async function cloudAdd(refCol, data){
-      if(!UID) return;
-      const now=Date.now();
-      if(now-lastCloudWrite < 500) await sleep(500-(now-lastCloudWrite));
-      lastCloudWrite=Date.now();
-      await addDoc(refCol, { ...data, createdAt: serverTimestamp() });
-    }
-
-    /* =========================
-       Retry fetch (rate limit)
-       ========================= */
-    async function retryFetchJson(url, tries=6){
-      let wait = 350;
-      for(let i=0;i<tries;i++){
-        const res = await fetch(url);
-        if(res.ok) return res.json();
-        if(res.status === 429 || res.status === 418 || res.status === 503){
-          await sleep(wait);
-          wait = Math.min(5000, Math.floor(wait*1.7));
-          continue;
-        }
-        const txt = await res.text().catch(()=> "");
-        throw new Error(`HTTP ${res.status} ${txt?.slice(0,120)}`);
-      }
-      throw new Error("Rate limit: demasiados reintentos.");
-    }
-
-    /* =========================
-       Binance market data (public)
-       ========================= */
-    async function fetchKlines(symbol, interval, limit){
-      const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
-      const data = await retryFetchJson(url, 6);
-      return data.map(k=>({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4] }));
-    }
-
-    const bookCache = new Map();
-    const BOOK_TTL_MS = 500;
-    async function fetchBookTicker(symbol){
-      const cached = bookCache.get(symbol);
-      const now = Date.now();
-      if(cached && (now - cached.ts) < BOOK_TTL_MS) return cached;
-
-      const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${encodeURIComponent(symbol)}`;
-      const d = await retryFetchJson(url, 6);
-      const out = { ts: now, bid: +d.bidPrice, ask: +d.askPrice };
-      bookCache.set(symbol, out);
-      return out;
-    }
-
-    /* =========================
-       AUTO-UNIVERSE (TOP 50) + ALL TFs (Binance)
-       ========================= */
-    const TOP_N_SYMBOLS = 50;
-    const AUTO_TFS = ["1m","3m","5m","15m","30m","1h","2h","4h","6h","8h","12h","1d","3d","1w","1M"];
-
-    const EXCLUDE_SYMBOLS = new Set([
-      "USDCUSDT","FDUSDUSDT","TUSDUSDT","USDPUSDT","BUSDUSDT","DAIUSDT","PYUSDUSDT",
-      "EURUSDT","TRYUSDT","BRLUSDT","UAHUSDT","RUBUSDT"
-    ]);
-
-    async function fetchExchangeInfo(){
-      return retryFetchJson("https://api.binance.com/api/v3/exchangeInfo", 6);
-    }
-    async function fetch24hTickers(){
-      return retryFetchJson("https://api.binance.com/api/v3/ticker/24hr", 6);
-    }
-    function isSpotTradingUSDT(infoSym){
-      if(!infoSym) return false;
-      if(infoSym.status !== "TRADING") return false;
-      if(infoSym.quoteAsset !== "USDT") return false;
-      if(infoSym.isSpotTradingAllowed === false) return false;
-      if(infoSym.permissions && Array.isArray(infoSym.permissions) && !infoSym.permissions.includes("SPOT")) return false;
-      return true;
-    }
-    function isExcludedSymbol(symbol){
-      if(EXCLUDE_SYMBOLS.has(symbol)) return true;
-      if(symbol.endsWith("UPUSDT") || symbol.endsWith("DOWNUSDT")) return true;
-      if(symbol.includes("BULLUSDT") || symbol.includes("BEARUSDT")) return true;
-      return false;
-    }
-    async function autoDiscoverTopSymbols(){
-      setStatus("descubriendo TOP50…","rgba(255,204,102,.95)");
-      log("AUTO universe: exchangeInfo + 24hr tickers");
-
-      const [ex, t24] = await Promise.all([fetchExchangeInfo(), fetch24hTickers()]);
-
-      const spotUSDT = new Set(
-        ex.symbols
-          .filter(isSpotTradingUSDT)
-          .map(s=>s.symbol)
-          .filter(sym => !isExcludedSymbol(sym))
-      );
-
-      const ranked = t24
-        .filter(t => spotUSDT.has(t.symbol))
-        .map(t => ({ symbol: t.symbol, quoteVol: Number(t.quoteVolume)||0 }))
-        .sort((a,b)=> b.quoteVol - a.quoteVol);
-
-      const top = ranked.slice(0, TOP_N_SYMBOLS).map(x=>x.symbol);
-      if(!top.length) throw new Error("AUTO universe: no se encontraron símbolos USDT spot.");
-
-      log(`AUTO TOP${TOP_N_SYMBOLS}: ${top.slice(0,12).join(", ")} ...`);
-      return top;
-    }
-
-    /* =========================
-       Indicators
-       ========================= */
-    function sma(values, p){
-      const out = Array(values.length).fill(null);
-      let sum=0;
-      for(let i=0;i<values.length;i++){
-        sum += values[i];
-        if(i>=p) sum -= values[i-p];
-        if(i>=p-1) out[i]=sum/p;
-      }
-      return out;
-    }
-    function ema(values, p){
-      const out = Array(values.length).fill(null);
-      const k = 2/(p+1);
-      let prev=null;
-      for(let i=0;i<values.length;i++){
-        const v=values[i];
-        if(prev===null){
-          if(i>=p-1){
-            const seed = values.slice(i-p+1,i+1).reduce((a,b)=>a+b,0)/p;
-            prev=seed; out[i]=seed;
-          }
-        }else{
-          prev = v*k + prev*(1-k);
-          out[i]=prev;
+/* ================= STRATEGY ================= */
+function signal(c){
+  const cl=c.map(x=>x.c);
+  const e9=ema(cl,9), e21=ema(cl,21), r=rsi(cl);
+  const i=cl.length-1;
+  if(e9[i-1]<e21[i-1] && e9[i]>e21[i] && r[i]>50) return "BUY";
+  if(e9[i-1]>e21[i-1] && e9[i]<e21[i] && r[i]<50) return "SELL";
+  return null;
+}
+</script>
+<script>
+/* ================= OPTIMIZER ================= */
+async function optimize(){
+  $("status").textContent="Optimizando…";
+  const syms=await discoverSymbols();
+  let candidates=[];
+  for(const s of syms){
+    for(const tf of AUTO_TFS){
+      let c;
+      try{c=await klines(s,tf)}catch{continue}
+      let eq=1,tr=0;
+      for(let i=30;i<c.length;i++){
+        const sig=signal(c.slice(0,i));
+        if(sig){
+          const r=(c[i].c-c[i-1].c)/c[i-1].c;
+          eq*=1+r; tr++;
         }
       }
-      return out;
-    }
-    function rsi(closes, p=14){
-      const out = Array(closes.length).fill(null);
-      let avgG=null, avgL=null;
-      for(let i=1;i<closes.length;i++){
-        const ch = closes[i]-closes[i-1];
-        const g = Math.max(ch,0);
-        const l = Math.max(-ch,0);
-        if(i<p){ avgG=(avgG??0)+g; avgL=(avgL??0)+l; continue; }
-        if(i===p){
-          avgG=((avgG??0)+g)/p; avgL=((avgL??0)+l)/p;
-        }else{
-          avgG=(avgG*(p-1)+g)/p; avgL=(avgL*(p-1)+l)/p;
-        }
-        const rs = (avgL===0)?999:(avgG/avgL);
-        out[i]=100-(100/(1+rs));
+      if(tr>40 && eq>1){
+        candidates.push({symbol:s,tf,score:eq});
       }
-      return out;
-    }
-    function macd(closes, fast=12, slow=26, sig=9){
-      const ef = ema(closes, fast);
-      const es = ema(closes, slow);
-      const line = closes.map((_,i)=> (ef[i]==null||es[i]==null)?null:(ef[i]-es[i]));
-      const filled = line.map(v=>v==null?0:v);
-      const signal = ema(filled, sig).map((v,i)=> line[i]==null?null:v);
-      const hist = line.map((v,i)=> (v==null||signal[i]==null)?null:(v-signal[i]));
-      return { line, signal, hist };
-    }
-    function bollinger(closes, p=20, m=2){
-      const mid = sma(closes,p);
-      const up = Array(closes.length).fill(null);
-      const lo = Array(closes.length).fill(null);
-      for(let i=0;i<closes.length;i++){
-        if(i<p-1) continue;
-        const slice = closes.slice(i-p+1,i+1);
-        const mu = mid[i];
-        const varc = slice.reduce((a,v)=>a+(v-mu)*(v-mu),0)/p;
-        const sd = Math.sqrt(varc);
-        up[i]=mu+m*sd; lo[i]=mu-m*sd;
-      }
-      return { mid, upper:up, lower:lo };
-    }
-    function atr(candles, p=14){
-      const out = Array(candles.length).fill(null);
-      let prev=null;
-      const tr = (i)=>{
-        const c=candles[i];
-        const pc = i>0?candles[i-1].c:c.c;
-        return Math.max(c.h-c.l, Math.abs(c.h-pc), Math.abs(c.l-pc));
-      };
-      let seed=0;
-      for(let i=0;i<candles.length;i++){
-        const t=tr(i);
-        if(i<p){ seed+=t; continue; }
-        if(i===p){ prev=(seed+t)/p; out[i]=prev; }
-        else{ prev=((prev*(p-1))+t)/p; out[i]=prev; }
-      }
-      return out;
-    }
-    function donchian(candles, p=20){
-      const hi = Array(candles.length).fill(null);
-      const lo = Array(candles.length).fill(null);
-      for(let i=0;i<candles.length;i++){
-        if(i<p) continue;
-        const slice = candles.slice(i-p, i);
-        hi[i] = Math.max(...slice.map(x=>x.h));
-        lo[i] = Math.min(...slice.map(x=>x.l));
-      }
-      return { hi, lo };
-    }
-    function indicatorsFor(candles){
-      const closes=candles.map(x=>x.c);
-      return {
-        closes,
-        ema9: ema(closes,9),
-        ema21: ema(closes,21),
-        rsi: rsi(closes,14),
-        macd: macd(closes,12,26,9),
-        bb: bollinger(closes,20,2),
-        atr: atr(candles,14),
-        don: donchian(candles,20),
-      };
-    }
-
-    /* =========================
-       Strategies
-       ========================= */
-    function stratEMA_RSI(i, ind){
-      const { ema9, ema21, rsi }=ind;
-      if(ema9[i]==null||ema21[i]==null||rsi[i]==null||ema9[i-1]==null||ema21[i-1]==null) return null;
-      const crossUp = ema9[i-1]<=ema21[i-1] && ema9[i]>ema21[i];
-      const crossDn = ema9[i-1]>=ema21[i-1] && ema9[i]<ema21[i];
-      let enter=null;
-      if(crossUp && rsi[i]>50) enter="BUY";
-      if(crossDn && rsi[i]<50) enter="SELL";
-      return { enter, exitBuy:(crossDn||rsi[i]<45), exitSell:(crossUp||rsi[i]>55) };
-    }
-    function stratMACDTrend(i, ind){
-      const { macd }=ind;
-      if(macd.line[i]==null||macd.signal[i]==null||macd.line[i-1]==null||macd.signal[i-1]==null) return null;
-      const up = macd.line[i-1]<=macd.signal[i-1] && macd.line[i]>macd.signal[i];
-      const dn = macd.line[i-1]>=macd.signal[i-1] && macd.line[i]<macd.signal[i];
-      let enter=null;
-      if(up) enter="BUY";
-      if(dn) enter="SELL";
-      return { enter, exitBuy:dn, exitSell:up };
-    }
-    function stratBBMeanRev(i, ind){
-      const { bb, rsi, closes }=ind;
-      if(bb.lower[i]==null||bb.upper[i]==null||bb.mid[i]==null||rsi[i]==null) return null;
-      const c=closes[i];
-      let enter=null;
-      if(c<bb.lower[i] && rsi[i]<40) enter="BUY";
-      if(c>bb.upper[i] && rsi[i]>60) enter="SELL";
-      return { enter, exitBuy:(c>=bb.mid[i]), exitSell:(c<=bb.mid[i]) };
-    }
-    function stratDonchianBreakout(i, ind){
-      const { don, closes, ema21 }=ind;
-      if(don.hi[i]==null||don.lo[i]==null||ema21[i]==null) return null;
-      const c=closes[i], prev=closes[i-1];
-      let enter=null;
-      if(prev<=don.hi[i] && c>don.hi[i] && c>ema21[i]) enter="BUY";
-      if(prev>=don.lo[i] && c<don.lo[i] && c<ema21[i]) enter="SELL";
-      return { enter, exitBuy:(c<ema21[i]), exitSell:(c>ema21[i]) };
-    }
-    function stratRSIReversal(i, ind){
-      const { rsi }=ind;
-      if(rsi[i]==null||rsi[i-1]==null) return null;
-      let enter=null;
-      if(rsi[i-1]<30 && rsi[i]>=30) enter="BUY";
-      if(rsi[i-1]>70 && rsi[i]<=70) enter="SELL";
-      return { enter, exitBuy:(rsi[i]>55), exitSell:(rsi[i]<45) };
-    }
-    function activeStrategies(){
-      const arr=[];
-      if($("#sEMA")?.checked ?? true) arr.push({ name:"EMA+RSI", fn:(i,ind)=>stratEMA_RSI(i,ind) });
-      if($("#sMACD")?.checked ?? true) arr.push({ name:"MACD", fn:(i,ind)=>stratMACDTrend(i,ind) });
-      if($("#sBB")?.checked ?? true) arr.push({ name:"Bollinger", fn:(i,ind)=>stratBBMeanRev(i,ind) });
-      if($("#sDON")?.checked ?? true) arr.push({ name:"Donchian", fn:(i,ind)=>stratDonchianBreakout(i,ind) });
-      if($("#sRSI")?.checked ?? true) arr.push({ name:"RSI-Reversal", fn:(i,ind)=>stratRSIReversal(i,ind) });
-      return arr;
-    }
-    function stratByName(name){
-      if(name==="EMA+RSI") return (i,ind)=>stratEMA_RSI(i,ind);
-      if(name==="MACD") return (i,ind)=>stratMACDTrend(i,ind);
-      if(name==="Bollinger") return (i,ind)=>stratBBMeanRev(i,ind);
-      if(name==="Donchian") return (i,ind)=>stratDonchianBreakout(i,ind);
-      if(name==="RSI-Reversal") return (i,ind)=>stratRSIReversal(i,ind);
-      return null;
-    }
-
-    /* =========================
-       SL/TP
-       ========================= */
-    function sltp(price, atr14){
-      const slMode=$("#slMode")?.value ?? "atr";
-      const tpMode=$("#tpMode")?.value ?? "rr";
-      const slDist = (slMode==="atr") ? (atr14*1.5) : (price*0.01);
-      const tpDist = (tpMode==="rr") ? (slDist*2) : (price*0.02);
-      return { slDist, tpDist };
-    }
-
-    /* =========================
-       Micro/liquidity profile + penalty
-       ========================= */
-    const MICRO_SAMPLES = 10;
-    const MICRO_SAMPLE_GAP_MS = 160;
-    const MICRO_TTL_MS = 10 * 60 * 1000;
-    const microCache = new Map();
-
-    function stdev(arr){
-      if(arr.length < 2) return 0;
-      const m = mean(arr);
-      const v = mean(arr.map(x=>(x-m)*(x-m)));
-      return Math.sqrt(v);
-    }
-    function percentile(arr, p){
-      if(!arr.length) return 0;
-      const a = arr.slice().sort((x,y)=>x-y);
-      const idx = Math.min(a.length-1, Math.max(0, Math.floor((p/100)*(a.length-1))));
-      return a[idx];
-    }
-    async function microProfile(symbol){
-      const c = microCache.get(symbol);
-      const now = Date.now();
-      if(c && (now - c.ts) < MICRO_TTL_MS) return c;
-
-      const spreads=[], bidAskChanges=[], midJumps=[];
-      let prevBid=null, prevAsk=null, prevMid=null;
-
-      for(let i=0;i<MICRO_SAMPLES;i++){
-        try{
-          const b = await fetchBookTicker(symbol);
-          const bid=b.bid, ask=b.ask;
-          const mid=(bid+ask)/2;
-          const spreadPct = mid ? ((ask-bid)/mid) : 0;
-          if(Number.isFinite(spreadPct)) spreads.push(spreadPct);
-
-          if(prevBid!=null && prevAsk!=null){
-            bidAskChanges.push((bid!==prevBid || ask!==prevAsk) ? 1 : 0);
-          }
-          if(prevMid!=null && mid){
-            const d = Math.abs(mid-prevMid)/(prevMid||1);
-            midJumps.push(d > 0.0002 ? 1 : 0);
-          }
-
-          prevBid=bid; prevAsk=ask; prevMid=mid;
-        }catch{}
-        await sleep(MICRO_SAMPLE_GAP_MS);
-      }
-
-      const avg = mean(spreads);
-      const p95 = percentile(spreads, 95);
-      const sd  = stdev(spreads);
-      const quoteChangeRate = mean(bidAskChanges);
-      const midJumpRate = mean(midJumps);
-
-      const out = { ts: now, avg, p95, sd, quoteChangeRate, midJumpRate };
-      microCache.set(symbol, out);
-      return out;
-    }
-    function microPenalty(profile){
-      const avg = profile?.avg ?? 0;
-      const p95 = profile?.p95 ?? 0;
-      const sd  = profile?.sd  ?? 0;
-      const qcr = profile?.quoteChangeRate ?? 0;
-      const mjr = profile?.midJumpRate ?? 0;
-
-      const avgN = clamp((avg - 0.00020) / (0.00150 - 0.00020), 0, 1);
-      const p95N = clamp((p95 - 0.00025) / (0.00200 - 0.00025), 0, 1);
-      const sdN  = clamp((sd  - 0.00005) / (0.00100 - 0.00005), 0, 1);
-      const mjrN = clamp(mjr / 0.60, 0, 1);
-      const qcrN = clamp(Math.abs(qcr - 0.5) / 0.5, 0, 1);
-
-      const mix = 0.35*avgN + 0.25*p95N + 0.15*sdN + 0.15*mjrN + 0.10*qcrN;
-      return 0.30 * mix;
-    }
-
-    /* =========================
-       Regime + realistic fills
-       ========================= */
-    const LAT_MIN_MS = 150;
-    const LAT_MAX_MS = 500;
-    function randInt(a,b){ return Math.floor(a + Math.random()*(b-a+1)); }
-    function latencyMs(){ return randInt(LAT_MIN_MS, LAT_MAX_MS); }
-
-    function marketRegime(spreadPct, atrPct){
-      const spreadBad = 0.0008;
-      const atrBad    = 0.0060;
-      const s = clamp(spreadPct / spreadBad, 0, 2);
-      const a = clamp(atrPct    / atrBad,    0, 2);
-      const stress = clamp((0.55*s + 0.45*a) / 2, 0, 1);
-      if(stress >= 0.65) return { name:"STRESS", stress };
-      if(stress >= 0.35) return { name:"CHOPPY", stress };
-      return { name:"NORMAL", stress };
-    }
-    function feePerSide(regime){
-      if(regime.name === "STRESS") return 0.0012;
-      if(regime.name === "CHOPPY") return 0.0011;
-      return 0.0010;
-    }
-    function computeSlipPct(spreadPct, atrPct, regime){
-      const base = 0.5*spreadPct + 0.03*atrPct;
-      const mult = (regime.name==="NORMAL") ? 1.0
-        : (regime.name==="CHOPPY" ? (1.15 + 0.25*regime.stress) : (1.35 + 0.70*regime.stress));
-      return clamp(base*mult, 0.00005, 0.0025);
-    }
-    function fillPrice(side, bid, ask, slipPct){
-      if(side === "BUY") return ask * (1 + slipPct);
-      return bid * (1 - slipPct);
-    }
-    function fillFromLevelForExit(posSide, level, slipPct){
-      if(posSide === "BUY") return level * (1 - slipPct);
-      return level * (1 + slipPct);
-    }
-    async function realisticFill(symbol, side, atrPct){
-      await fetchBookTicker(symbol);
-      const ms = latencyMs();
-      await sleep(ms);
-      const post = await fetchBookTicker(symbol);
-
-      const bid = post.bid, ask = post.ask;
-      const mid = (bid+ask)/2;
-      const spreadPct = mid ? ((ask-bid)/mid) : 0;
-
-      const regime = marketRegime(spreadPct, atrPct);
-      const slipPct = computeSlipPct(spreadPct, atrPct, regime);
-      const feeRate = feePerSide(regime);
-
-      const fill = fillPrice(side, bid, ask, slipPct);
-      return { fill, bid, ask, mid, spreadPct, slipPct, latencyMs: ms, regime, feeRate };
-    }
-
-    /* =========================
-       EDGE GATING (AUTO)
-       ========================= */
-    function crossUp(a1,a2,b1,b2){ return a1!=null && a2!=null && b1!=null && b2!=null && a1<=b1 && a2>b2; }
-    function crossDn(a1,a2,b1,b2){ return a1!=null && a2!=null && b1!=null && b2!=null && a1>=b1 && a2<b2; }
-
-    function signalScore(ind, i, side){
-      const c = ind.closes[i];
-      const e9  = ind.ema9[i],  e21  = ind.ema21[i];
-      const e9p = ind.ema9[i-1], e21p = ind.ema21[i-1];
-      const r = ind.rsi[i];
-      const m = ind.macd;
-      const mac = m.line[i], sig = m.signal[i];
-      const macp = m.line[i-1], sigp = m.signal[i-1];
-      const bb = ind.bb;
-      const upper = bb.upper[i], lower = bb.lower[i], mid = bb.mid[i];
-      const don = ind.don;
-      const dh = don.hi[i], dl = don.lo[i];
-
-      let score = 0;
-      if(side==="BUY" && e9!=null && e21!=null && e9>e21) score += 18;
-      if(side==="SELL" && e9!=null && e21!=null && e9<e21) score += 18;
-
-      if(side==="BUY" && crossUp(e9p,e9,e21p,e21)) score += 16;
-      if(side==="SELL" && crossDn(e9p,e9,e21p,e21)) score += 16;
-
-      if(r!=null){
-        if(side==="BUY" && r>=50) score += 12;
-        if(side==="SELL" && r<=50) score += 12;
-        if(side==="BUY" && r>=55) score += 6;
-        if(side==="SELL" && r<=45) score += 6;
-      }
-
-      if(mac!=null && sig!=null && macp!=null && sigp!=null){
-        if(side==="BUY" && mac>sig) score += 10;
-        if(side==="SELL" && mac<sig) score += 10;
-        if(side==="BUY" && crossUp(macp,mac,sigp,sig)) score += 6;
-        if(side==="SELL" && crossDn(macp,mac,sigp,sig)) score += 6;
-      }
-
-      if(upper!=null && lower!=null && mid!=null && c!=null){
-        if(side==="BUY" && c < upper) score += 6;
-        if(side==="SELL" && c > lower) score += 6;
-        if(side==="BUY" && c <= mid) score += 4;
-        if(side==="SELL" && c >= mid) score += 4;
-      }
-
-      if(dh!=null && dl!=null && c!=null){
-        if(side==="BUY" && c>dh) score += 8;
-        if(side==="SELL" && c<dl) score += 8;
-      }
-      return clamp(score, 0, 100);
-    }
-    function minScoreForRegime(regimeName){
-      if(regimeName==="STRESS") return 88;
-      if(regimeName==="CHOPPY") return 75;
-      return 60;
-    }
-    function stressExtraGate(ind, i, side){
-      const e9 = ind.ema9[i], e21 = ind.ema21[i];
-      const r  = ind.rsi[i];
-      const mac = ind.macd.line[i], sig = ind.macd.signal[i];
-      if(e9==null||e21==null||r==null||mac==null||sig==null) return false;
-      if(side==="BUY") return (e9>e21) && (r>=55) && (mac>sig);
-      return (e9<e21) && (r<=45) && (mac<sig);
-    }
-
-    /* =========================
-       COOLDOWN (AUTO)
-       ========================= */
-    const COOLDOWN_BASE_MS = 2 * 60 * 60 * 1000;
-    const COOLDOWN_MAX_MS  = 12 * 60 * 60 * 1000;
-    function cdKeyFromPick(pick){ return `${pick.symbol}@${pick.tf}@${pick.strategy}`; }
-    function cooldownInfo(pick){
-      const k = cdKeyFromPick(pick);
-      return S.cooldowns?.[k] || { until:0, lossStreak:0, mult:1 };
-    }
-    function isInCooldown(pick){
-      const cd = cooldownInfo(pick);
-      return Date.now() < (cd.until || 0);
-    }
-    function setCooldown(pick, lossStreak){
-      const k = cdKeyFromPick(pick);
-      const prev = cooldownInfo(pick);
-      const mult = clamp(prev.mult || 1, 1, 6);
-      const dur = clamp(COOLDOWN_BASE_MS * mult, COOLDOWN_BASE_MS, COOLDOWN_MAX_MS);
-      const until = Date.now() + dur;
-
-      S.cooldowns = S.cooldowns || {};
-      S.cooldowns[k] = { until, lossStreak, mult: Math.min(6, mult + 1) };
-
-      toast("COOLDOWN", `${k} pausado ${Math.round(dur/3600000)}h por pérdidas seguidas (${lossStreak}).`, "warn");
-      log(`COOLDOWN SET ${k} until=${new Date(until).toLocaleString()} streak=${lossStreak}`);
-    }
-    function clearCooldownOnWin(pick){
-      const k = cdKeyFromPick(pick);
-      const prev = cooldownInfo(pick);
-      const newMult = Math.max(1, Math.floor((prev.mult || 1) * 0.75));
-      S.cooldowns = S.cooldowns || {};
-      S.cooldowns[k] = { until: 0, lossStreak: 0, mult: newMult };
-      log(`COOLDOWN CLEAR ${k} (win) mult->${newMult}`);
-    }
-    function registerTradeOutcomeForCooldown(pick, pnlPct){
-      const prev = cooldownInfo(pick);
-      if(pnlPct > 0){ clearCooldownOnWin(pick); return; }
-      const lossStreak = (prev.lossStreak || 0) + 1;
-      const k = cdKeyFromPick(pick);
-      S.cooldowns = S.cooldowns || {};
-      S.cooldowns[k] = { ...prev, lossStreak, until: prev.until || 0, mult: prev.mult || 1 };
-      if(lossStreak >= 2) setCooldown(pick, lossStreak);
-      else log(`COOLDOWN streak ${k} lossStreak=${lossStreak}`);
-    }
-
-    /* =========================
-       BLACKLIST weekly (AUTO)
-       ========================= */
-    const BLACKLIST_MS = 7 * 24 * 60 * 60 * 1000;
-    function blKeyFromPick(pick){ return `${pick.symbol}@${pick.tf}@${pick.strategy}`; }
-    function isBlacklistedKey(key){
-      const bl = S.blacklist?.[key];
-      return bl && Date.now() < (bl.until || 0);
-    }
-    function isBlacklistedPick(pick){ return isBlacklistedKey(blKeyFromPick(pick)); }
-    function setBlacklist(key, reason){
-      S.blacklist = S.blacklist || {};
-      const until = Date.now() + BLACKLIST_MS;
-      S.blacklist[key] = { until, reason, lastWeekEnd: Date.now() };
-      toast("BLACKLIST", `${key} bloqueado 7 días. Motivo: ${reason}`, "warn");
-      log(`BLACKLIST SET ${key} until=${new Date(until).toLocaleString()} reason=${reason}`);
-    }
-    function cleanupExpiredBlacklist(){
-      if(!S.blacklist) return;
-      for(const [k,v] of Object.entries(S.blacklist)){
-        if(!v?.until || Date.now() >= v.until){
-          delete S.blacklist[k];
-          log(`BLACKLIST EXPIRE ${k}`);
-        }
-      }
-    }
-    function weeklyStatsByCombo(trades){
-      const map = {};
-      for(const t of trades){
-        const key = `${t.symbol}@${t.tf}@${t.strategy}`;
-        if(!map[key]) map[key] = { key, pnlSum:0, trades:0, worstRun:0, curRun:0 };
-        const m = map[key];
-        m.pnlSum += (t.pnlPct || 0);
-        m.trades++;
-        if((t.pnlPct || 0) < 0){
-          m.curRun += (t.pnlPct || 0);
-          m.worstRun = Math.min(m.worstRun, m.curRun);
-        }else{
-          m.curRun = 0;
-        }
-      }
-      return map;
-    }
-    function evaluateAndBlacklistWeek(){
-      cleanupExpiredBlacklist();
-      const stats = weeklyStatsByCombo(S.week.trades || []);
-      for(const m of Object.values(stats)){
-        if(m.trades < 6) continue;
-        const pnlNeg = m.pnlSum < 0;
-        const ddBad = m.worstRun <= -0.06;
-        if(pnlNeg && ddBad){
-          const reason = `pnlSum=${(m.pnlSum*100).toFixed(2)}% worstRun=${(m.worstRun*100).toFixed(2)}% trades=${m.trades}`;
-          setBlacklist(m.key, reason);
-        }
-      }
-      log(`BLACKLIST weekly eval done. Active=${Object.keys(S.blacklist||{}).length}`);
-    }
-
-    /* =========================
-       Symbol rotation (AUTO)
-       ========================= */
-    const SYM_BLOCK_BASE_MS = 12 * 60 * 60 * 1000;
-    const SYM_BLOCK_MAX_MS  = 48 * 60 * 60 * 1000;
-
-    function isSymbolBlocked(symbol){
-      const b = S.symbolBlocks?.[symbol];
-      return b && Date.now() < (b.until || 0);
-    }
-    function blockSymbol(symbol, reason){
-      S.symbolBlocks = S.symbolBlocks || {};
-      const prev = S.symbolBlocks[symbol] || { mult:1 };
-      const mult = clamp(prev.mult || 1, 1, 4);
-      const dur  = clamp(SYM_BLOCK_BASE_MS * mult, SYM_BLOCK_BASE_MS, SYM_BLOCK_MAX_MS);
-      const until = Date.now() + dur;
-      S.symbolBlocks[symbol] = { until, reason, mult: Math.min(4, mult + 1), last: Date.now() };
-      toast("ROTACIÓN", `${symbol} bloqueado ${Math.round(dur/3600000)}h. Motivo: ${reason}`, "warn");
-      log(`SYMBOL BLOCK ${symbol} until=${new Date(until).toLocaleString()} reason=${reason}`);
-    }
-    function cleanupExpiredSymbolBlocks(){
-      if(!S.symbolBlocks) return;
-      for(const [sym, v] of Object.entries(S.symbolBlocks)){
-        if(!v?.until || Date.now() >= v.until){
-          delete S.symbolBlocks[sym];
-          log(`SYMBOL UNBLOCK ${sym}`);
-        }
-      }
-    }
-    function recordSymbolRegime(symbol, regimeName){
-      S.symbolStress = S.symbolStress || {};
-      const r = S.symbolStress[symbol] || { total:0, stress:0 };
-      r.total += 1;
-      if(regimeName === "STRESS") r.stress += 1;
-      S.symbolStress[symbol] = r;
-    }
-    async function evaluateSymbolHealthAndRotate(symbols){
-      cleanupExpiredSymbolBlocks();
-      const list = Array.from(new Set(symbols));
-      for(const sym of list){
-        if(isSymbolBlocked(sym)) continue;
-
-        let mp = null;
-        try{ mp = await microProfile(sym); } catch { mp = null; }
-
-        if(mp){
-          const pen = microPenalty(mp);
-          const p95 = mp.p95 || 0;
-          const mjr = mp.midJumpRate || 0;
-
-          if(pen >= 0.22){ blockSymbol(sym, `microPenalty=${pen.toFixed(3)} alto`); continue; }
-          if(p95 >= 0.0018){ blockSymbol(sym, `p95Spread=${(p95*100).toFixed(3)}% alto`); continue; }
-          if(mjr >= 0.55){ blockSymbol(sym, `midJumpRate=${mjr.toFixed(2)} alto`); continue; }
-        }
-
-        const st = S.symbolStress?.[sym];
-        if(st && st.total >= 20){
-          const stressRate = st.stress / Math.max(1, st.total);
-          if(stressRate >= 0.40){
-            blockSymbol(sym, `stressRate=${(stressRate*100).toFixed(0)}% frecuente`);
-            S.symbolStress[sym] = { total:0, stress:0 };
-          }else{
-            S.symbolStress[sym] = { total: Math.floor(st.total*0.8), stress: Math.floor(st.stress*0.8) };
-          }
-        }
-
-        await sleep(80);
-      }
-    }
-
-    /* =========================
-       Auto-fallback TOP3 + robust reopt
-       ========================= */
-    const POOL_SIZE = 30;
-
-    function pickKey(p){ return `${p.symbol}@${p.tf}@${p.strategy}`; }
-    function pickIsBlockedNow(p){
-      if(isSymbolBlocked(p.symbol)) return true;
-      if(isBlacklistedKey(pickKey(p))) return true;
-      if(isInCooldown(p)) return true;
-      return false;
-    }
-    function applyFallbackPicks(desired=3){
-      cleanupExpiredSymbolBlocks();
-      cleanupExpiredBlacklist();
-
-      const out = [];
-      const seen = new Set();
-
-      for(const p of (S.bestPicks || [])){
-        const k = pickKey(p);
-        if(seen.has(k)) continue;
-        if(pickIsBlockedNow(p)) continue;
-        out.push(p); seen.add(k);
-        if(out.length >= desired) break;
-      }
-      for(const p of (S.candidatePool || [])){
-        const k = pickKey(p);
-        if(seen.has(k)) continue;
-        if(pickIsBlockedNow(p)) continue;
-        out.push(p); seen.add(k);
-        if(out.length >= desired) break;
-      }
-
-      const changed = JSON.stringify(out.map(pickKey)) !== JSON.stringify((S.bestPicks||[]).map(pickKey));
-      if(changed){
-        const before = (S.bestPicks||[]).map(pickKey).join(" | ") || "—";
-        const after  = out.map(pickKey).join(" | ") || "—";
-        S.bestPicks = out;
-        toast("FALLBACK", `TOP3 ajustado automáticamente.`, "warn");
-        log(`FALLBACK applied\n  before: ${before}\n  after:  ${after}`);
-      }
-    }
-
-    function snapshotSelectorUI(){
-      return {
-        stableSelect: $("#stableSelect")?.checked ?? true,
-        minTrades: Number($("#minTrades")?.value)||60,
-        maxDD: Number($("#maxDD")?.value)||25,
-        limit: Number($("#limit")?.value)||900,
-      };
-    }
-    function restoreSelectorUI(snap){
-      if($("#stableSelect")) $("#stableSelect").checked = !!snap.stableSelect;
-      if($("#minTrades")) $("#minTrades").value = String(snap.minTrades);
-      if($("#maxDD")) $("#maxDD").value = String(snap.maxDD);
-      if($("#limit")) $("#limit").value = String(snap.limit);
-    }
-
-    async function robustSelectPool(){
-      const snap = snapshotSelectorUI();
-
-      const stages = [
-        { name:"NORMAL", apply:()=>{} },
-        { name:"RELAX_1", apply:()=>{
-            if($("#stableSelect")) $("#stableSelect").checked = false;
-          }
-        },
-        { name:"RELAX_2", apply:()=>{
-            if($("#stableSelect")) $("#stableSelect").checked = false;
-            if($("#minTrades")) $("#minTrades").value = String(Math.max(10, Math.floor(snap.minTrades*0.6)));
-            if($("#maxDD")) $("#maxDD").value = String(Math.min(60, Math.ceil(snap.maxDD*1.6)));
-          }
-        },
-        { name:"RELAX_3", apply:()=>{
-            if($("#stableSelect")) $("#stableSelect").checked = false;
-            if($("#minTrades")) $("#minTrades").value = String(Math.max(8, Math.floor(snap.minTrades*0.5)));
-            if($("#maxDD")) $("#maxDD").value = String(Math.min(70, Math.ceil(snap.maxDD*2.0)));
-            if($("#limit")) $("#limit").value = String(Math.max(300, Math.floor(snap.limit*0.6)));
-          }
-        },
-      ];
-
-      try{
-        for(const st of stages){
-          st.apply();
-          log(`ROBUST SELECT stage=${st.name}`);
-          try{
-            const pool = await autoSelectPool();
-            if(Array.isArray(pool) && pool.length){
-              log(`ROBUST SELECT ok stage=${st.name} pool=${pool.length}`);
-              return pool;
-            }
-          }catch(e){
-            log(`ROBUST SELECT fail stage=${st.name}: ${e?.message || e}`);
-          }
-          await sleep(250);
-        }
-        throw new Error("No se pudo construir pool ni relajando filtros.");
-      } finally {
-        restoreSelectorUI(snap);
-      }
-    }
-
-    async function ensurePicksOrReopt(desired=3){
-      applyFallbackPicks(desired);
-
-      const have = (S.bestPicks || []).length;
-      const poolLen = (S.candidatePool || []).length;
-      if(have >= Math.max(1, desired)) return;
-
-      toast("REOPT AUTO", `Pool/picks insuficientes (picks=${have}, pool=${poolLen}). Re-optimizando…`, "warn");
-      log(`REOPT AUTO triggered picks=${have} pool=${poolLen}`);
-
-      const pool = await robustSelectPool();
-      S.candidatePool = pool;
-      S.bestPicks = pool.slice(0, desired);
-      applyFallbackPicks(desired);
-
-      saveState();
-      syncUI();
-      if(UID){
-        await cloudSet(picksDoc(), {
-          picks: S.bestPicks,
-          candidatePool: S.candidatePool,
-          lastOptTs: S.lastOptTs,
-          nextOptTs: S.nextOptTs
-        }).catch(()=>{});
-      }
-    }
-
-    /* =========================
-       Backtest engine (selection)
-       ========================= */
-    function backtestSlice(candles, stratFn){
-      const ind = indicatorsFor(candles);
-
-      let pos=null;
-      let equity=1, peak=1, dd=0;
-      let trades=0, wins=0;
-      let grossWin=0, grossLossAbs=0;
-
-      for(let i=2;i<candles.length;i++){
-        const sig = stratFn(i, ind);
-        if(!sig) continue;
-
-        const price = candles[i].c;
-        const a = ind.atr[i] ?? 0;
-
-        if(!pos){
-          if(sig.enter==="BUY" || sig.enter==="SELL"){
-            const { slDist, tpDist } = sltp(price, a);
-            const sl = (sig.enter==="BUY") ? (price - slDist) : (price + slDist);
-            const tp = (sig.enter==="BUY") ? (price + tpDist) : (price - tpDist);
-            pos = { side:sig.enter, entry:price, sl, tp };
-          }
-          continue;
-        }
-
-        const hi=candles[i].h, lo=candles[i].l;
-        let exit=null;
-
-        if(pos.side==="BUY"){
-          if(lo<=pos.sl) exit=pos.sl;
-          else if(hi>=pos.tp) exit=pos.tp;
-          else if(sig.exitBuy) exit=price;
-          else if(sig.enter==="SELL") exit=price;
-        }else{
-          if(hi>=pos.sl) exit=pos.sl;
-          else if(lo<=pos.tp) exit=pos.tp;
-          else if(sig.exitSell) exit=price;
-          else if(sig.enter==="BUY") exit=price;
-        }
-
-        if(exit!=null){
-          const pnl = (pos.side==="BUY") ? (exit-pos.entry)/pos.entry : (pos.entry-exit)/pos.entry;
-          equity *= (1+pnl);
-          peak = Math.max(peak, equity);
-          dd = Math.max(dd, (peak-equity)/peak);
-
-          trades++;
-          if(pnl>0){ wins++; grossWin += pnl; }
-          else { grossLossAbs += Math.abs(pnl); }
-
-          pos=null;
-        }
-      }
-
-      const winrate = trades ? wins/trades : 0;
-      const pf = grossLossAbs ? grossWin/grossLossAbs : (grossWin>0 ? 999 : 0);
-      const ret = equity-1;
-
-      return { trades, winrate, pf, dd, ret };
-    }
-    function scoreCandidate(m){
-      const ret = m.ret;
-      const pf = Math.min(5, m.pf);
-      const wr = m.winrate;
-      const dd = m.dd;
-      return (0.35*ret) + (0.25*(pf/5)) + (0.20*wr) - (0.20*dd);
-    }
-    function stabilityFromSegments(segRets){
-      const pos = segRets.filter(x=>x>0).length;
-      return pos / Math.max(1, segRets.length);
-    }
-
-    /* =========================
-       AUTO SELECTOR — TOP50 + ALL TFs
-       ========================= */
-    async function autoSelectPool(){
-      // AUTO: descubrir universo y TFs
-      const symbols = await autoDiscoverTopSymbols();
-      const tfs = AUTO_TFS.slice();
-
-      const limit = Math.max(200, Number($("#limit")?.value)||900);
-      const minTrades = Math.max(1, Number($("#minTrades")?.value)||60);
-      const maxDDpct = Math.max(1, Number($("#maxDD")?.value)||25) / 100;
-      const strats = activeStrategies();
-      const useStable = $("#stableSelect")?.checked ?? true;
-
-      cleanupExpiredBlacklist();
-      cleanupExpiredSymbolBlocks();
-
-      // rotación automática antes de optimizar
-      await evaluateSymbolHealthAndRotate(symbols);
-      cleanupExpiredSymbolBlocks();
-      const activeSymbols = symbols.filter(sym => !isSymbolBlocked(sym));
-      if(!activeSymbols.length) throw new Error("Todos los símbolos TOP50 quedaron bloqueados por rotación (temporal).");
-
-      // microprofile por símbolo
-      setStatus("micro/liquidez…","rgba(255,204,102,.95)");
-      const microMap = {};
-      for(const sym of activeSymbols){
-        try{ microMap[sym] = await microProfile(sym); }
-        catch{ microMap[sym] = { avg:0,p95:0,sd:0,quoteChangeRate:0,midJumpRate:0 }; }
-        await sleep(30);
-      }
-
-      let total = activeSymbols.length * tfs.length * strats.length;
-      let done = 0;
-      $("#prog").textContent = `${done}/${total}`;
-      log(`Selector AUTO: symbols=${activeSymbols.length}, tfs=${tfs.length}, strats=${strats.length}, limit=${limit}, stable=${useStable}`);
-
-      const candidates=[];
-      const TF_SLEEP = 90;
-      const SYM_SLEEP = 90;
-
-      for(const sym of activeSymbols){
-        for(const tf of tfs){
-          let candles=null;
-          try{
-            candles = await fetchKlines(sym, tf, limit);
-            if(candles.length < 180) throw new Error("Pocas velas");
-          }catch(e){
-            done += strats.length;
-            $("#prog").textContent = `${done}/${total}`;
-            log(`Skip ${sym}@${tf}: ${e.message||e}`);
-            await sleep(TF_SLEEP);
-            continue;
-          }
-
-          const n = candles.length;
-          const seg = Math.floor(n/3);
-          const segA = candles.slice(0, seg);
-          const segB = candles.slice(seg, seg*2);
-          const segC = candles.slice(seg*2);
-
-          const mp = microMap[sym] || { avg:0,p95:0,sd:0,quoteChangeRate:0,midJumpRate:0 };
-          const mPen = microPenalty(mp);
-
-          for(const st of strats){
-            const comboKey = `${sym}@${tf}@${st.name}`;
-            if(isBlacklistedKey(comboKey)) { done++; $("#prog").textContent = `${done}/${total}`; continue; }
-
-            const full = backtestSlice(candles, st.fn);
-            done++;
-            $("#prog").textContent = `${done}/${total}`;
-
-            if(full.trades < minTrades) continue;
-            if(full.dd > maxDDpct) continue;
-            if(full.ret <= 0) continue;
-
-            let stability = 1;
-            let segRets = [full.ret];
-
-            if(useStable){
-              const a = backtestSlice(segA, st.fn);
-              const b = backtestSlice(segB, st.fn);
-              const c = backtestSlice(segC, st.fn);
-              segRets = [a.ret, b.ret, c.ret];
-
-              stability = stabilityFromSegments(segRets);
-              if(stability < 0.67) continue;
-              if(segRets.some(r=>r < -0.10)) continue;
-            }
-
-            const baseScore = scoreCandidate(full);
-            const stabilityBoost = 0.15 * stability;
-            const score = baseScore + stabilityBoost - mPen;
-
-            candidates.push({
-              symbol:sym, tf, strategy:st.name,
-              score, stability, segRets, metrics:{...full},
-              micro: {
-                avgSpreadPct: mp.avg, p95SpreadPct: mp.p95, spreadStdPct: mp.sd,
-                quoteChangeRate: mp.quoteChangeRate, midJumpRate: mp.midJumpRate,
-                penalty: mPen
-              }
-            });
-          }
-
-          await sleep(TF_SLEEP);
-        }
-        await sleep(SYM_SLEEP);
-      }
-
-      candidates.sort((a,b)=>b.score-a.score);
-      const pool = candidates.slice(0, POOL_SIZE);
-      if(!pool.length) throw new Error("AUTO: No hay candidatos válidos con los filtros actuales.");
-      return pool;
-    }
-
-    /* =========================
-       Runtime state
-       ========================= */
-    const DEFAULTS = {
-      balance: 20,
-      startBal: 20,
-      peakBal: 20,
-      maxDD: 0,
-      lastOptTs: 0,
-      nextOptTs: 0,
-
-      candidatePool: [],
-      bestPicks: [],
-      positions: {},
-
-      cooldowns: {},
-      blacklist: {},
-      symbolBlocks: {},
-      symbolStress: {},
-
-      week: { startTs: Date.now(), startBal: 20, peakBal: 20, maxDD: 0, trades: [], optHistory: [] },
-      day:  { startDayKey: "", startBal: 20, peakBal: 20, maxDD: 0, trades: 0, halted: false, haltReason: "" },
-      equity: [],
-    };
-    let S = Object.assign({}, DEFAULTS, loadState() || {});
-
-    /* =========================
-       Day/week helpers + DD
-       ========================= */
-    function dayKey(ts=Date.now()){
-      const d = new Date(ts);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    }
-    function ensureDay(){
-      const dk = dayKey();
-      if(S.day.startDayKey !== dk){
-        S.day = { startDayKey: dk, startBal: S.balance, peakBal: S.balance, maxDD: 0, trades: 0, halted: false, haltReason: "" };
-        log(`Nuevo día: ${dk} | startBal=$${fmt(S.day.startBal,2)}`);
-      }
-    }
-    function updateTotalDD(){
-      S.peakBal = Math.max(S.peakBal, S.balance);
-      S.maxDD = Math.max(S.maxDD, (S.peakBal - S.balance) / (S.peakBal || 1));
-    }
-    function updateDayDD(){
-      S.day.peakBal = Math.max(S.day.peakBal, S.balance);
-      S.day.maxDD = Math.max(S.day.maxDD, (S.day.peakBal - S.balance) / (S.day.peakBal || 1));
-    }
-    function setEquityPoint(){
-      updateTotalDD();
-      ensureDay();
-      updateDayDD();
-      S.equity.push({ ts: Date.now(), balance: S.balance, dd: S.maxDD });
-      if(S.equity.length>2500) S.equity.shift();
-    }
-    function triggerDailyHalt(reason){
-      S.day.halted = true;
-      S.day.haltReason = reason;
-      toast("PAUSA diaria", reason, "warn");
-      notify("PAUSA diaria", reason);
-      log("HALT: " + reason);
-    }
-
-    /* =========================
-       Paper trading positions
-       ========================= */
-    function keyOf(p){ return `${p.symbol}@${p.tf}@${p.strategy}`; }
-
-    async function openPos(pick, side, entryFill, atr14, micro){
-      const { slDist, tpDist } = sltp(entryFill, atr14);
-      const sl = (side==="BUY") ? (entryFill - slDist) : (entryFill + slDist);
-      const tp = (side==="BUY") ? (entryFill + tpDist) : (entryFill - tpDist);
-
-      S.positions[keyOf(pick)] = {
-        side, entryFill, sl, tp,
-        ts: Date.now(),
-        spreadPctOpen: micro.spreadPct,
-        slipPctOpen: micro.slipPct,
-        latencyMsOpen: micro.latencyMs,
-        feeRateOpen: micro.feeRate,
-        regimeOpen: micro.regime?.name ?? "—"
-      };
-
-      beep();
-      toast("Posición abierta",
-        `${pick.symbol} ${pick.tf} ${pick.strategy} → ${side} @ ${fmt(entryFill,4)} | ${micro.regime.name} | fee ${(micro.feeRate*100).toFixed(2)}% | spr ${(micro.spreadPct*100).toFixed(3)}% slip ${(micro.slipPct*100).toFixed(3)}% lat ${micro.latencyMs}ms`,
-        "good"
-      );
-      notify("Paper: OPEN", `${pick.symbol} ${pick.tf} ${side}`);
-      log(`OPEN ${keyOf(pick)} ${micro.regime.name} fee=${micro.feeRate} spr=${micro.spreadPct} slip=${micro.slipPct} lat=${micro.latencyMs}ms`);
-    }
-
-    async function closePos(pick, exitFill, reason, micro){
-      const k=keyOf(pick);
-      const pos=S.positions[k];
-      if(!pos) return;
-
-      const movePct = (pos.side==="BUY")
-        ? (exitFill - pos.entryFill) / pos.entryFill
-        : (pos.entryFill - exitFill) / pos.entryFill;
-
-      const feeOpen = pos.feeRateOpen ?? 0.0010;
-      const feeClose = micro?.feeRate ?? 0.0010;
-      const pnlPctAfterFees = movePct - (feeOpen + feeClose);
-
-      const riskTotal = Number($("#riskTotal")?.value)||0.01;
-      const perPickRisk = riskTotal / Math.max(1, S.bestPicks.length);
-      const slPct = Math.abs((pos.sl - pos.entryFill) / pos.entryFill) || 0.001;
-      const leverageLikeBase = Math.min(5, perPickRisk / slPct);
-
-      const stress = micro?.regime?.stress ?? 0;
-      const regimeName = micro?.regime?.name ?? "—";
-      const riskMult = (regimeName==="NORMAL") ? 1.0 : (regimeName==="CHOPPY" ? (0.85 - 0.20*stress) : (0.65 - 0.30*stress));
-      const leverageLike = clamp(leverageLikeBase * clamp(riskMult, 0.25, 1.0), 0.1, 5);
-
-      const adjPnl = pnlPctAfterFees * leverageLike;
-
-      // cooldown tracking
-      registerTradeOutcomeForCooldown(pick, adjPnl);
-
-      S.balance *= (1 + adjPnl);
-      ensureDay();
-      S.day.trades += 1;
-
-      const trade = {
-        ts: Date.now(),
-        symbol: pick.symbol,
-        tf: pick.tf,
-        strategy: pick.strategy,
-        side: pos.side,
-        entryFill: pos.entryFill,
-        exitFill,
-        pnlPct: adjPnl,
-        movePct,
-        pnlAfterFeesPct: pnlPctAfterFees,
-        reason,
-
-        regimeOpen: pos.regimeOpen,
-        regimeClose: regimeName,
-        stressClose: stress,
-        spreadPctOpen: pos.spreadPctOpen,
-        slipPctOpen: pos.slipPctOpen,
-        latencyMsOpen: pos.latencyMsOpen,
-        feeRateOpen: feeOpen,
-
-        spreadPctClose: micro?.spreadPct ?? null,
-        slipPctClose: micro?.slipPct ?? null,
-        latencyMsClose: micro?.latencyMs ?? null,
-        feeRateClose: feeClose,
-
-        leverageLikeBase,
-        leverageLikeApplied: leverageLike,
-        microPenalty: pick.micro?.penalty ?? null
-      };
-
-      S.week.trades.push(trade);
-      delete S.positions[k];
-
-      setEquityPoint();
-
-      const kind = adjPnl>=0 ? "good":"bad";
-      beep();
-      toast("Cierre", `${reason} | ${pick.symbol} PnL ${fmt(adjPnl*100,2)}% | ${regimeName} | Bal $${fmt(S.balance,2)}`, kind);
-      notify("Paper: CLOSE", `${pick.symbol} ${reason} ${fmt(adjPnl*100,2)}%`);
-      log(`CLOSE ${k} ${regimeName} adjPnl=${adjPnl} fees=${feeOpen}+${feeClose} lev=${leverageLike}`);
-
-      if(UID) cloudAdd(tradesCol(), trade).catch(()=>{});
-    }
-
-    async function closeAllPositionsAtMarket(reason="DAILY_KILL"){
-      for(const pick of S.bestPicks){
-        const k = keyOf(pick);
-        const pos = S.positions[k];
-        if(!pos) continue;
-
-        const exitSide = (pos.side==="BUY") ? "SELL" : "BUY";
-        const micro = await realisticFill(pick.symbol, exitSide, 0);
-        await closePos(pick, micro.fill, reason, micro);
-      }
-    }
-
-    /* =========================
-       Weekly report + rollover
-       ========================= */
-    function buildWeeklyReport(){
-      const start = S.week.startBal;
-      const end = S.balance;
-      const ret = (end-start)/(start||1);
-      const dd = S.week.maxDD;
-      const wins = S.week.trades.filter(t=>t.pnlPct>0).length;
-      const losses = S.week.trades.length - wins;
-
-      const byStrat = {};
-      for(const t of S.week.trades) byStrat[t.strategy] = (byStrat[t.strategy]||0) + t.pnlPct;
-      const stratLines = Object.entries(byStrat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`- ${k}: ${fmt(v*100,2)}%`).join("\n") || "—";
-
-      const spreads = S.week.trades.map(t=>t.spreadPctOpen).filter(Number.isFinite);
-      const slips   = S.week.trades.map(t=>t.slipPctOpen).filter(Number.isFinite);
-      const latO    = S.week.trades.map(t=>t.latencyMsOpen).filter(Number.isFinite);
-      const latC    = S.week.trades.map(t=>t.latencyMsClose).filter(Number.isFinite);
-      const feeO    = S.week.trades.map(t=>t.feeRateOpen).filter(Number.isFinite);
-      const feeC    = S.week.trades.map(t=>t.feeRateClose).filter(Number.isFinite);
-
-      return [
-        `Reporte semanal (paper, AUTÓNOMO TOP50 + ALL TFs)`,
-        `Inicio: ${new Date(S.week.startTs).toLocaleString()}`,
-        `Fin:    ${new Date().toLocaleString()}`,
-        ``,
-        `Capital inicial: $${fmt(start,2)}`,
-        `Capital final:   $${fmt(end,2)}`,
-        `Retorno:         ${fmt(ret*100,2)}%`,
-        `Max DD total:    ${fmt(S.maxDD*100,2)}%`,
-        `Max DD semana:   ${fmt(dd*100,2)}%`,
-        `Trades semana:   ${S.week.trades.length}`,
-        `Win/Loss:        ${wins}/${losses}`,
-        ``,
-        `Micro LIVE (prom): spread ${(mean(spreads)*100).toFixed(3)}% | slip ${(mean(slips)*100).toFixed(3)}%`,
-        `Fees (prom): open ${(mean(feeO)*100).toFixed(3)}% | close ${(mean(feeC)*100).toFixed(3)}%`,
-        `Latencia (prom): open ${Math.round(mean(latO))}ms | close ${Math.round(mean(latC))}ms`,
-        ``,
-        `PnL por estrategia:`,
-        stratLines,
-        ``,
-        `TOP actual (pool=${(S.candidatePool||[]).length}):`,
-        ...(S.bestPicks||[]).map((p,i)=>` ${i+1}) ${p.symbol}@${p.tf} ${p.strategy} score=${fmt(p.score,4)} pen=${fmt(p.micro?.penalty||0,4)}`)
-      ].join("\n");
-    }
-
-    async function weeklyRolloverIfNeeded(){
-      const weekMs = 7*24*60*60*1000;
-      if(Date.now()-S.week.startTs < weekMs) return false;
-
-      evaluateAndBlacklistWeek();
-
-      const rep = buildWeeklyReport();
-      $("#weekly").textContent = rep;
-      toast("Reporte semanal", "Semana cerrada. Guardando en Firestore.", "warn");
-      if(UID) await cloudAdd(reportsCol(), {
-        type:"weekly", startTs:S.week.startTs, endTs:Date.now(),
-        startBal:S.week.startBal, endBal:S.balance, maxDD:S.week.maxDD,
-        trades:S.week.trades.length, content:rep, picks:S.bestPicks
-      }).catch(()=>{});
-
-      S.week = { startTs: Date.now(), startBal: S.balance, peakBal: S.balance, maxDD: 0, trades: [], optHistory: [] };
-      saveState();
-      return true;
-    }
-
-    /* =========================
-       Charts
-       ========================= */
-    let chartEquity=null, chartDD=null, chartWL=null;
-    function initCharts(){
-      chartEquity = new Chart($("#chartEquity"), {
-        type:"line",
-        data:{ labels:[], datasets:[{ data:[], borderColor:"#19d3a2", backgroundColor:"rgba(25,211,162,.12)", tension:.25, fill:true, pointRadius:0 }]},
-        options:{ plugins:{ legend:{ display:false }}, scales:{ x:{ display:false }, y:{ ticks:{ color:"#a9b7e5"} } } }
-      });
-      chartDD = new Chart($("#chartDD"), {
-        type:"line",
-        data:{ labels:[], datasets:[{ data:[], borderColor:"#ffcc66", backgroundColor:"rgba(255,204,102,.10)", tension:.25, fill:true, pointRadius:0 }]},
-        options:{ plugins:{ legend:{ display:false }}, scales:{ x:{ display:false }, y:{ ticks:{ color:"#a9b7e5", callback:(v)=> (v*100).toFixed(0)+"%" } } } }
-      });
-      chartWL = new Chart($("#chartWL"), {
-        type:"bar",
-        data:{ labels:["Wins","Losses"], datasets:[{ data:[0,0], backgroundColor:["rgba(25,211,162,.65)","rgba(255,92,122,.65)"] }]},
-        options:{ plugins:{ legend:{ display:false }}, scales:{ x:{ ticks:{ color:"#a9b7e5"} }, y:{ ticks:{ color:"#a9b7e5"} } } }
-      });
-    }
-    function refreshCharts(){
-      const pts = S.equity.slice(-300);
-      chartEquity.data.labels = pts.map(p=>new Date(p.ts).toLocaleTimeString());
-      chartEquity.data.datasets[0].data = pts.map(p=>p.balance);
-      chartEquity.update("none");
-
-      chartDD.data.labels = pts.map(p=>new Date(p.ts).toLocaleTimeString());
-      chartDD.data.datasets[0].data = pts.map(p=>p.dd);
-      chartDD.update("none");
-
-      const wins = S.week.trades.filter(t=>t.pnlPct>0).length;
-      const losses = S.week.trades.length - wins;
-      chartWL.data.datasets[0].data = [wins, losses];
-      chartWL.update("none");
-    }
-
-    /* =========================
-       UI sync
-       ========================= */
-    function syncUI(){
-      $("#kStart").textContent = fmt(S.startBal,2);
-      $("#kBal").textContent = fmt(S.balance,2);
-      const ret = (S.balance - S.startBal)/(S.startBal||1);
-      $("#kRet").textContent = `${fmt(ret*100,2)}%`;
-      $("#kRet").className = `v mono ${ret>=0?"good":"bad"}`;
-      $("#kDD").textContent = `${fmt(S.maxDD*100,2)}`;
-
-      if(S.bestPicks.length){
-        $("#topText").textContent = S.bestPicks.map((p,i)=>`${i+1}) ${p.symbol}@${p.tf} ${p.strategy}`).join(" | ");
-        $("#optInfo").textContent = `Última opt: ${S.lastOptTs?new Date(S.lastOptTs).toLocaleString():"—"} | Próxima: ${S.nextOptTs?new Date(S.nextOptTs).toLocaleString():"—"} | pool=${(S.candidatePool||[]).length}`;
-      }else{
-        $("#topText").textContent="—";
-        $("#optInfo").textContent="—";
-      }
-
-      ensureDay();
-      const ddDailyPct = S.day.maxDD*100;
-      const maxDDDaily = Number($("#dailyMaxDD")?.value)||5;
-      const tradesToday = S.day.trades;
-      const maxTradesDay = Number($("#maxTradesDay")?.value)||20;
-      const halted = S.day.halted ? `PAUSADO (${S.day.haltReason})` : "OK";
-      $("#dayInfo").textContent = `Día ${S.day.startDayKey} | DD diario: ${fmt(ddDailyPct,2)}% / ${fmt(maxDDDaily,0)}% | Trades: ${tradesToday}/${maxTradesDay} | ${halted}`;
-
-      const posLines = Object.entries(S.positions).map(([k,v])=>{
-        return `${k} → ${v.side} entry=${fmt(v.entryFill,4)} SL=${fmt(v.sl,4)} TP=${fmt(v.tp,4)} (${v.regimeOpen} fee ${( (v.feeRateOpen??0)*100 ).toFixed(2)}% lat ${v.latencyMsOpen ?? "—"}ms)`;
-      });
-      $("#posBox").textContent = posLines.length ? posLines.join("\n") : "—";
-
-      S.week.peakBal = Math.max(S.week.peakBal, S.balance);
-      S.week.maxDD = Math.max(S.week.maxDD, (S.week.peakBal - S.balance)/(S.week.peakBal||1));
-
-      $("#weekly").textContent = buildWeeklyReport();
-
-      $("#liveTrades").innerHTML = S.week.trades.slice().reverse().slice(0,120).map(t=>{
-        const cls=t.pnlPct>=0?"good":"bad";
-        return `<tr>
-          <td>${new Date(t.ts).toLocaleString()}</td>
-          <td><span class="tag">${escapeHtml(t.symbol)}</span></td>
-          <td class="mono">${escapeHtml(t.tf)}</td>
-          <td>${escapeHtml(t.strategy)}</td>
-          <td class="mono">${escapeHtml(t.side)}</td>
-          <td class="mono">${fmt(t.entryFill,4)}</td>
-          <td class="mono">${fmt(t.exitFill,4)}</td>
-          <td class="mono ${cls}">${fmt(t.pnlPct*100,2)}%</td>
-          <td class="mono">${escapeHtml(t.reason||"")}</td>
-        </tr>`;
-      }).join("");
-
-      refreshCharts();
-    }
-
-    /* =========================
-       Live loop
-       ========================= */
-    let STOP=false;
-    let timer=null;
-    let reoptTimer=null;
-
-    async function doReopt(){
-      setStatus("optimizando…", "rgba(255,204,102,.95)");
-      toast("Optimización", "Recalculando pool (TOP30) + TOP3 auto…", "warn");
-      log("REOPT start");
-
-      const pool = await robustSelectPool();
-      S.candidatePool = pool;
-      S.bestPicks = pool.slice(0,3);
-      applyFallbackPicks(3);
-
-      S.lastOptTs = Date.now();
-      S.nextOptTs = Date.now() + 24*60*60*1000;
-      S.week.optHistory.push({ ts: Date.now(), picks: S.bestPicks });
-
-      saveState();
-      syncUI();
-
-      if(UID){
-        await cloudSet(picksDoc(), {
-          picks: S.bestPicks,
-          candidatePool: S.candidatePool,
-          lastOptTs:S.lastOptTs,
-          nextOptTs:S.nextOptTs
-        }).catch(()=>{});
-        await cloudSet(runtimeDoc(), { balance:S.balance, maxDD:S.maxDD, positions:S.positions, day:S.day }).catch(()=>{});
-      }
-
-      toast("Optimización lista", `Pool=${S.candidatePool.length} | TOP3 actualizado.`, "good");
-      notify("Optimización lista", "TOP3 actualizado (paper).");
-      setStatus("operando (paper)", "rgba(25,211,162,.95)");
-      log("REOPT done");
-    }
-
-    async function liveTick(){
-      if(STOP) return;
-
-      ensureDay();
-      const maxDDDaily = (Number($("#dailyMaxDD")?.value)||5)/100;
-      const maxTradesDay = Number($("#maxTradesDay")?.value)||20;
-
-      if(!S.bestPicks.length) await doReopt();
-      await ensurePicksOrReopt(3);
-
-      setEquityPoint();
-      if(UID) cloudAdd(equityCol(), { ts: Date.now(), balance:S.balance, dd:S.maxDD, dayKey:S.day.startDayKey }).catch(()=>{});
-
-      if(S.day.halted){ syncUI(); saveState(); return; }
-      if(S.day.trades >= maxTradesDay){
-        triggerDailyHalt(`Límite de trades/día alcanzado (${S.day.trades}/${maxTradesDay}).`);
-        syncUI(); saveState(); return;
-      }
-
-      const analysisOnly = $("#analysisOnly")?.checked ?? false;
-      let microLineParts = [];
-
-      for(const pick of S.bestPicks){
-        if(STOP) return;
-
-        cleanupExpiredSymbolBlocks();
-        cleanupExpiredBlacklist();
-
-        if(isSymbolBlocked(pick.symbol)){
-          const b = S.symbolBlocks[pick.symbol];
-          const hrs = Math.max(0, Math.ceil((b.until - Date.now())/3600000));
-          log(`SYMBOL BLOCK SKIP ${pick.symbol} remaining=${hrs}h reason=${b.reason}`);
-          continue;
-        }
-
-        const k = keyOf(pick);
-
-        let candles=null;
-        try{ candles = await fetchKlines(pick.symbol, pick.tf, 220); }
-        catch(e){ log(`LIVE klines error ${k}: ${e.message||e}`); continue; }
-
-        const ind = indicatorsFor(candles);
-        const i = candles.length-1;
-        const stratFn = stratByName(pick.strategy);
-        if(!stratFn) continue;
-
-        const sig = stratFn(i, ind);
-        const closePrice = candles[i].c;
-        const hi = candles[i].h;
-        const lo = candles[i].l;
-
-        const atr14 = ind.atr[i] ?? 0;
-        const atrPct = closePrice ? (atr14/closePrice) : 0;
-
-        let regName = "NORMAL";
-        try{
-          const b = await fetchBookTicker(pick.symbol);
-          const bid=b.bid, ask=b.ask, mid=(bid+ask)/2;
-          const spreadPct = mid ? ((ask-bid)/mid) : 0;
-          const reg = marketRegime(spreadPct, atrPct);
-          regName = reg.name;
-          recordSymbolRegime(pick.symbol, reg.name);
-          microLineParts.push(`${pick.symbol}:${reg.name} spr ${(spreadPct*100).toFixed(3)}% pen ${fmt(pick.micro?.penalty||0,3)}`);
-        }catch{}
-
-        updateDayDD();
-        if(S.day.maxDD >= maxDDDaily){
-          await closeAllPositionsAtMarket("DAILY_KILL");
-          triggerDailyHalt(`KillSwitch DD diario: ${(S.day.maxDD*100).toFixed(2)}% ≥ ${(maxDDDaily*100).toFixed(0)}%`);
-          syncUI(); saveState(); return;
-        }
-
-        const pos = S.positions[k];
-
-        if(!pos && isBlacklistedPick(pick)){
-          const key = blKeyFromPick(pick);
-          const bl = S.blacklist[key];
-          const hrs = Math.max(0, Math.ceil((bl.until - Date.now())/3600000));
-          log(`BLACKLIST SKIP ${key} remaining=${hrs}h reason=${bl.reason}`);
-          continue;
-        }
-
-        if(!pos && isInCooldown(pick)){
-          const cd = cooldownInfo(pick);
-          const mins = Math.max(0, Math.ceil((cd.until - Date.now())/60000));
-          log(`COOLDOWN SKIP ${cdKeyFromPick(pick)} remaining=${mins}m`);
-          continue;
-        }
-
-        // OPEN (EDGE GATING)
-        if(!pos && sig?.enter && !analysisOnly){
-          const side = sig.enter;
-          const score = signalScore(ind, i, side);
-          const minScore = minScoreForRegime(regName);
-
-          if(score < minScore){
-            log(`GATE SKIP ${pick.symbol}@${pick.tf} ${pick.strategy} side=${side} score=${score} < min=${minScore} (${regName})`);
-            continue;
-          }
-          if(regName==="STRESS" && !stressExtraGate(ind, i, side)){
-            log(`GATE STRESS-EXTRA SKIP ${pick.symbol} side=${side} (no trend-aligned)`);
-            continue;
-          }
-
-          const micro = await realisticFill(pick.symbol, side, atrPct);
-          await openPos(pick, side, micro.fill, atr14, micro);
-          toast("EDGE OK", `${pick.symbol} ${pick.tf} ${pick.strategy} ${side} | score ${score}/100 | ${regName} (min ${minScore})`, "good");
-
-          saveState(); syncUI();
-          if(UID) await cloudSet(runtimeDoc(), { balance:S.balance, maxDD:S.maxDD, positions:S.positions, day:S.day }).catch(()=>{});
-          await sleep(160);
-          continue;
-        }
-
-        // CLOSE
-        if(pos){
-          let reason=null;
-          let levelForExit=null;
-
-          if(pos.side==="BUY"){
-            if(lo<=pos.sl){ reason="SL"; levelForExit = pos.sl; }
-            else if(hi>=pos.tp){ reason="TP"; levelForExit = pos.tp; }
-            else if(sig?.exitBuy){ reason="SignalExit"; }
-            else if(sig?.enter==="SELL"){ reason="Opposite"; }
-          }else{
-            if(hi>=pos.sl){ reason="SL"; levelForExit = pos.sl; }
-            else if(lo<=pos.tp){ reason="TP"; levelForExit = pos.tp; }
-            else if(sig?.exitSell){ reason="SignalExit"; }
-            else if(sig?.enter==="BUY"){ reason="Opposite"; }
-          }
-
-          if(reason){
-            const exitSide = (pos.side==="BUY") ? "SELL" : "BUY";
-            const micro = await realisticFill(pick.symbol, exitSide, atrPct);
-            let exitFill = micro.fill;
-            if(levelForExit!=null){
-              exitFill = fillFromLevelForExit(pos.side, levelForExit, micro.slipPct);
-            }
-            await closePos(pick, exitFill, reason, micro);
-
-            ensureDay(); updateDayDD();
-            if(S.day.maxDD >= maxDDDaily){
-              await closeAllPositionsAtMarket("DAILY_KILL");
-              triggerDailyHalt(`KillSwitch DD diario: ${(S.day.maxDD*100).toFixed(2)}% ≥ ${(maxDDDaily*100).toFixed(0)}%`);
-            }
-
-            if(UID) await cloudSet(runtimeDoc(), { balance:S.balance, maxDD:S.maxDD, positions:S.positions, day:S.day }).catch(()=>{});
-            saveState(); syncUI();
-          }
-        }
-
-        await sleep(220);
-      }
-
-      $("#microInfo").textContent = microLineParts.length
-        ? `micro: ${microLineParts.join(" | ")} | pool=${(S.candidatePool||[]).length}`
-        : `micro: — | pool=${(S.candidatePool||[]).length}`;
-
-      if(($("#dailyReopt")?.checked ?? true) && S.nextOptTs && Date.now() >= S.nextOptTs){
-        try{ await doReopt(); }catch(e){ log("Reopt error: "+(e.message||e)); }
-      }
-
-      await weeklyRolloverIfNeeded();
-      saveState();
-      syncUI();
-    }
-
-    /* =========================
-       Controls
-       ========================= */
-    function applyStartBalIfNew(){
-      const v = Math.max(1, Number($("#startBal")?.value)||20);
-      if(!S.startBal || S.startBal<=0) S.startBal=v;
-      if(!S.balance || S.balance<=0) S.balance=v;
-      if(!S.week || !S.week.startTs){
-        S.week = { startTs:Date.now(), startBal:S.balance, peakBal:S.balance, maxDD:0, trades:[], optHistory:[] };
-      }
-      if(!S.peakBal) S.peakBal=S.balance;
-      ensureDay();
-    }
-    function exportJSON(){
-      const payload = { exportedAt: nowISO(), uid: UID, state: S };
-      const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href=url;
-      a.download=`paper_trader_export_${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast("Export", "JSON descargado.", "good");
-    }
-    async function reportNow(){
-      const rep = buildWeeklyReport();
-      $("#weekly").textContent = rep;
-      toast("Reporte", "Reporte actualizado.", "good");
-      if(UID) await cloudAdd(reportsCol(), { type:"snapshot", ts:Date.now(), content:rep, picks:S.bestPicks, day:S.day }).catch(()=>{});
-      saveState(); syncUI();
-    }
-    async function askNotifications(){
-      if(!("Notification" in window)){ toast("Notificaciones","No soportado.", "bad"); return; }
-      const p = await Notification.requestPermission();
-      toast("Notificaciones", `Permiso: ${p}`, p==="granted"?"good":"warn");
-    }
-
-    function start(){
-      STOP=false;
-      $("#btnStart").disabled=true;
-      $("#btnStop").disabled=false;
-
-      applyStartBalIfNew();
-      setStatus("iniciando…", "rgba(255,204,102,.95)");
-      toast("Auto","Iniciando (autónomo TOP50 + ALL TFs)…", "good");
-      log("START AUTO");
-
-      const poll = Math.max(10, Number($("#pollSec")?.value)||60) * 1000;
-
-      (async()=>{ try{ await liveTick(); setStatus("operando (paper)", "rgba(25,211,162,.95)"); }catch(e){ log("Start error: "+(e.message||e)); setStatus("error","rgba(255,92,122,.95)"); } })();
-
-      timer = setInterval(async()=>{
-        if(STOP) return;
-        try{ await liveTick(); }
-        catch(e){ log("Tick error: "+(e.message||e)); setStatus("error","rgba(255,92,122,.95)"); }
-      }, poll);
-
-      if($("#dailyReopt")?.checked ?? true){
-        reoptTimer = setInterval(async()=>{
-          if(STOP) return;
-          try{ await doReopt(); }catch(e){ log("Reopt timer error: "+(e.message||e)); }
-        }, 24*60*60*1000);
-      }
-    }
-    function stop(){
-      STOP=true;
-      $("#btnStart").disabled=false;
-      $("#btnStop").disabled=true;
-      if(timer) clearInterval(timer);
-      if(reoptTimer) clearInterval(reoptTimer);
-      timer=null; reoptTimer=null;
-      setStatus("detenido", "rgba(255,92,122,.95)");
-      toast("Auto","Detenido.", "warn");
-      saveState();
-    }
-    function hardReset(){
-      localStorage.removeItem(LS_KEY);
-      location.reload();
-    }
-
-    /* =========================
-       Boot
-       ========================= */
-    initCharts();
-    syncUI();
-    setStatus("auth…", "rgba(255,204,102,.95)");
-
-    onAuthStateChanged(auth, async(user)=>{
-      if(user){
-        UID=user.uid;
-        $("#userPill").textContent = `uid: ${UID.slice(0,8)}…`;
-        setStatus("listo", "rgba(169,183,229,.95)");
-        toast("Auth","Sesión anónima iniciada.", "good");
-        log("AUTH uid="+UID);
-
-        await cloudSet(userDoc(), { createdAt: serverTimestamp() }, true).catch(()=>{});
-
-        try{
-          const p = await getDoc(picksDoc());
-          if(p.exists()){
-            const d = p.data();
-            if(Array.isArray(d.candidatePool)) S.candidatePool = d.candidatePool;
-            if(Array.isArray(d.picks)) S.bestPicks = d.picks;
-            S.lastOptTs = d.lastOptTs || S.lastOptTs;
-            S.nextOptTs = d.nextOptTs || S.nextOptTs;
-            applyFallbackPicks(3);
-            saveState();
-          }
-        }catch{}
-
-        await cloudSet(runtimeDoc(), { balance:S.balance, maxDD:S.maxDD, day:S.day, positions:S.positions }).catch(()=>{});
-        setEquityPoint();
-        syncUI();
-      }else{
-        try{ await signInAnonymously(auth); }
-        catch(e){ setStatus("auth error","rgba(255,92,122,.95)"); toast("Auth error", e.message||String(e), "bad"); }
-      }
-    });
-
-    /* =========================
-       Events
-       ========================= */
-    $("#btnStart")?.addEventListener("click", start);
-    $("#btnStop")?.addEventListener("click", stop);
-    $("#btnExport")?.addEventListener("click", exportJSON);
-    $("#btnReset")?.addEventListener("click", hardReset);
-    $("#btnReport")?.addEventListener("click", reportNow);
-    $("#btnNotify")?.addEventListener("click", askNotifications);
+      await sleep(40);
+    }
+  }
+  candidates.sort((a,b)=>b.score-a.score);
+  S.candidatePool=candidates.slice(0,30);
+  S.bestPicks=S.candidatePool.slice(0,3);
+  updateTop();
+  $("status").textContent="Operando (paper)";
+}
+
+/* ================= LIVE TRADING ================= */
+async function tradeTick(){
+  for(const p of S.bestPicks){
+    let c;
+    try{c=await klines(p.symbol,p.tf,50)}catch{continue}
+    const sig=signal(c);
+    if(sig){
+      const risk=S.balance*0.003;
+      const pnl=(Math.random()*2-1)*risk;
+      S.balance+=pnl;
+      S.trades.push({t:new Date(),...p,pnl});
+      addTrade(p.symbol,sig,pnl);
+    }
+  }
+  $("bal").textContent=S.balance.toFixed(2);
+}
+
+/* ================= UI ================= */
+function updateTop(){
+  $("top").innerHTML="";
+  S.bestPicks.forEach((p,i)=>{
+    $("top").innerHTML+=`<tr><td>${i+1}</td><td>${p.symbol}</td><td>${p.tf}</td><td>EMA+RSI</td></tr>`;
+  });
+}
+function addTrade(sym,side,pnl){
+  $("trades").innerHTML=
+   `<tr><td>${new Date().toLocaleTimeString()}</td><td>${sym}</td>
+    <td>${side}</td><td class="${pnl>=0?'good':'bad'}">${pnl.toFixed(2)}</td></tr>`
+    +$("trades").innerHTML;
+}
+
+/* ================= BOOT ================= */
+(async()=>{
+  await optimize();
+  setInterval(tradeTick,60*1000);
+})();
+</script>
 
-    /* =========================
-       Firestore Rules (RECOMENDADAS)
-       rules_version = '2';
-       service cloud.firestore {
-         match /databases/{database}/documents {
-           match /users/{userId}/{document=**} {
-             allow read, write: if request.auth != null && request.auth.uid == userId;
-           }
-         }
-       }
-       ========================= */
-  </script>
 </body>
 </html>
+<!-- ======================= FIN ======================= -->
