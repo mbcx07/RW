@@ -40,24 +40,10 @@
       align-items:center;
       justify-content:space-between;
     }
-    .brand{
-      display:flex; flex-direction:column; gap:3px;
-    }
-    .brand h1{
-      margin:0;
-      font-size:18px;
-      letter-spacing:.2px;
-      font-weight:750;
-    }
-    .brand .sub{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.2;
-    }
-    .pills{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      justify-content:flex-end;
-    }
+    .brand{display:flex; flex-direction:column; gap:3px;}
+    .brand h1{margin:0;font-size:18px;letter-spacing:.2px;font-weight:750;}
+    .brand .sub{font-size:12px;color:var(--muted);line-height:1.2;}
+    .pills{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
     .pill{
       border:1px solid var(--line);
       background: rgba(255,255,255,.03);
@@ -68,16 +54,8 @@
       box-shadow: var(--shadow);
       white-space:nowrap;
     }
-    .pill strong{ color: var(--text); font-weight:700; }
-    .wrap{
-      padding: 8px 18px 20px;
-      display:grid;
-      grid-template-columns: 360px 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 980px){
-      .wrap{ grid-template-columns: 1fr; }
-    }
+    .wrap{padding: 8px 18px 20px;display:grid;grid-template-columns: 360px 1fr;gap: 14px;}
+    @media (max-width: 980px){ .wrap{ grid-template-columns: 1fr; } }
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
       border:1px solid var(--line);
@@ -88,27 +66,15 @@
     .card .hd{
       padding: 12px 14px;
       border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
       background: rgba(0,0,0,.15);
     }
-    .card .hd .t{
-      font-weight:700;
-      font-size:13px;
-      color:var(--text);
-      letter-spacing:.2px;
-    }
+    .card .hd .t{font-weight:700;font-size:13px;color:var(--text);letter-spacing:.2px;}
     .card .bd{ padding: 14px; }
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .grid3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
     .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    label{
-      display:flex; flex-direction:column; gap:6px;
-      font-size:12px; color:var(--muted);
-      width:100%;
-    }
+    label{display:flex; flex-direction:column; gap:6px;font-size:12px; color:var(--muted);width:100%;}
     input, textarea, select{
       width:100%;
       padding:10px 10px;
@@ -133,31 +99,12 @@
       user-select:none;
     }
     .btn:active{ transform: translateY(1px); }
-    .btn.primary{
-      border-color: rgba(25,211,162,.45);
-      background: rgba(25,211,162,.12);
-    }
-    .btn.danger{
-      border-color: rgba(255,92,122,.45);
-      background: rgba(255,92,122,.12);
-    }
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-    }
-    .mini{
-      font-size:11px;
-      color: var(--muted);
-      line-height:1.35;
-    }
-    .kpis{
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap:10px;
-    }
-    @media(max-width:980px){
-      .kpis{ grid-template-columns: repeat(2,1fr); }
-    }
+    .btn.primary{ border-color: rgba(25,211,162,.45); background: rgba(25,211,162,.12); }
+    .btn.danger{ border-color: rgba(255,92,122,.45); background: rgba(255,92,122,.12); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .mini{ font-size:11px;color: var(--muted);line-height:1.35; }
+    .kpis{display:grid;grid-template-columns: repeat(4, 1fr);gap:10px;}
+    @media(max-width:980px){ .kpis{ grid-template-columns: repeat(2,1fr); } }
     .kpi{
       background: rgba(0,0,0,.18);
       border:1px solid rgba(169,183,229,.18);
@@ -169,17 +116,8 @@
     .good{ color: var(--good); }
     .bad{ color: var(--bad); }
     .warn{ color: var(--warn); }
-    table{
-      width:100%;
-      border-collapse: collapse;
-      font-size:12px;
-    }
-    th, td{
-      padding: 9px 8px;
-      border-bottom: 1px solid rgba(169,183,229,.14);
-      text-align:left;
-      vertical-align:top;
-    }
+    table{width:100%;border-collapse: collapse;font-size:12px;}
+    th, td{padding: 9px 8px;border-bottom: 1px solid rgba(169,183,229,.14);text-align:left;vertical-align:top;}
     th{ color: var(--muted); font-weight:700; font-size:11px; }
     .tag{
       display:inline-block;
@@ -190,24 +128,13 @@
       font-size:11px;
       color: var(--text);
     }
-    .split{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media(max-width:980px){
-      .split{ grid-template-columns: 1fr; }
-    }
+    .split{display:grid;grid-template-columns: 1fr 1fr;gap: 12px;}
+    @media(max-width:980px){ .split{ grid-template-columns: 1fr; } }
     .toasts{
-      position: fixed;
-      right: 14px;
-      bottom: 14px;
+      position: fixed; right: 14px; bottom: 14px;
       width: min(420px, calc(100% - 28px));
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      z-index: 9999;
-      pointer-events:none;
+      display:flex; flex-direction:column; gap:10px;
+      z-index: 9999; pointer-events:none;
     }
     .toast{
       pointer-events:auto;
@@ -220,22 +147,10 @@
     }
     .toast .title{ font-weight:800; font-size:12px; margin-bottom:3px;}
     .toast .msg{ font-size:12px; color: var(--muted); line-height:1.35; }
-    .footerNote{
-      padding: 0 18px 18px;
-      color: rgba(169,183,229,.85);
-      font-size:12px;
-      line-height:1.35;
-    }
+    .footerNote{padding: 0 18px 18px;color: rgba(169,183,229,.85);font-size:12px;line-height:1.35;}
     .divider{ height:1px; background: var(--line); margin:10px 0; }
-    .chartsRow{
-      display:grid;
-      grid-template-columns: 1.3fr 1fr 1fr;
-      gap: 12px;
-      padding: 14px;
-    }
-    @media(max-width: 1100px){
-      .chartsRow{ grid-template-columns: 1fr; }
-    }
+    .chartsRow{display:grid;grid-template-columns: 1.3fr 1fr 1fr;gap: 12px;padding: 14px;}
+    @media(max-width: 1100px){ .chartsRow{ grid-template-columns: 1fr; } }
     .chartBox{
       background: rgba(0,0,0,.18);
       border:1px solid rgba(169,183,229,.18);
@@ -249,24 +164,17 @@
       color: var(--muted);
       font-size:12px;
     }
-    pre{
-      margin:0;
-      white-space:pre-wrap;
-      word-break: break-word;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: rgba(219,230,255,.92);
-    }
+    pre{margin:0;white-space:pre-wrap;word-break: break-word;font-family: var(--mono);font-size: 11px;color: rgba(219,230,255,.92);}
   </style>
 </head>
 
 <body>
   <header>
     <div class="brand">
-      <h1>Auto Paper Trader (Binance) — TOP3 Auto + Realismo</h1>
+      <h1>Auto Paper Trader (Binance) — Totalmente Autónomo (TOP50 + ALL TFs)</h1>
       <div class="sub">
-        Paper trading en mercado real (sin dinero real). Incluye microestructura (spread/slippage/fees/latencia), edge gating,
-        cooldown, blacklist semanal, rotación automática de símbolos, fallback TOP3 y reopt robusto.
+        Descubre automáticamente TOP 50 USDT por volumen (spot), prueba todos los timeframes, backtestea, elige pool TOP30 y opera TOP3 con fallback.
+        Incluye microestructura (spread/slippage/fees/latencia), edge gating, cooldown, blacklist semanal y rotación automática.
       </div>
     </div>
     <div class="pills">
@@ -313,7 +221,7 @@
           <label>Máx trades por día
             <input id="maxTradesDay" type="number" step="1" value="20" />
           </label>
-          <label>Modo
+          <label>Modo SL
             <select id="slMode">
               <option value="atr" selected>SL por ATR</option>
               <option value="pct">SL por %</option>
@@ -338,16 +246,26 @@
 
         <div class="divider"></div>
 
-        <label>Símbolos (uno por línea) — Binance Spot (ej: BTCUSDT)
+        <label class="mini">
+          (Opcional) Símbolos manuales — <strong>NO se usan</strong> en modo autónomo (TOP50 auto).
           <textarea id="symbols">BTCUSDT
 ETHUSDT
 XRPUSDT</textarea>
         </label>
 
-        <label>Timeframes candidatos (uno por línea)
-          <textarea id="tfs">5m
+        <label class="mini">
+          (Opcional) Timeframes manuales — <strong>NO se usan</strong> en modo autónomo (ALL TFs auto).
+          <textarea id="tfs">1m
+3m
+5m
 15m
-1h</textarea>
+30m
+1h
+2h
+4h
+6h
+12h
+1d</textarea>
         </label>
 
         <div class="grid3">
@@ -408,7 +326,7 @@ XRPUSDT</textarea>
         </div>
 
         <p class="mini" style="margin-top:10px;">
-          ⚠️ Esto es un simulador/paper con datos reales de mercado. No es asesoría financiera y no ejecuta órdenes reales.
+          ⚠️ Simulador/paper con datos reales de mercado. No ejecuta órdenes reales.
         </p>
       </div>
     </section>
@@ -530,20 +448,20 @@ XRPUSDT</textarea>
   </div>
 
   <div class="footerNote">
-    <strong>Notas:</strong> Este proyecto usa Firebase (Firestore + Auth anónimo) desde CDN. El apiKey de Firebase no es “secreto”,
-    pero tus reglas de Firestore sí deben ser estrictas. Binance se usa solo para leer datos públicos (klines y bookTicker).
+    <strong>Notas:</strong> Binance se usa sólo para endpoints públicos (exchangeInfo/ticker/klines/bookTicker). Firebase guarda estado/trades/reportes por usuario anónimo.
   </div>
 
   <div class="toasts" id="toasts"></div>
 
-  <!-- =========================
-       APP SCRIPT (TODO integrado)
-       ========================= -->
   <script type="module">
     /* ==========================================================
-       ⚠️ IMPORTANTE
-       - Este código NO ejecuta órdenes reales, solo simula (paper).
-       - No es asesoría financiera. Úsalo para pruebas.
+       AUTO PAPER TRADER — TODO INTEGRADO
+       - TOP 50 símbolos USDT spot por volumen (AUTO)
+       - ALL timeframes de Binance (AUTO)
+       - Backtest masivo + selección estable
+       - Pool TOP30 + TOP3 con fallback
+       - Microestructura proxy (spread/slip/lat/fees) + edge gating
+       - Cooldown + blacklist semanal + rotación símbolos + reopt robusto
        ========================================================== */
 
     /* =========================
@@ -611,7 +529,7 @@ XRPUSDT</textarea>
     /* =========================
        Local state
        ========================= */
-    const LS_KEY="auto_paper_trader_all_in_one_v1";
+    const LS_KEY="auto_paper_trader_autonomous_top50_alltfs_v1";
     function loadState(){ try{ const raw=localStorage.getItem(LS_KEY); return raw?JSON.parse(raw):null; }catch{return null;} }
     function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
@@ -648,13 +566,30 @@ XRPUSDT</textarea>
     }
 
     /* =========================
+       Retry fetch (rate limit)
+       ========================= */
+    async function retryFetchJson(url, tries=6){
+      let wait = 350;
+      for(let i=0;i<tries;i++){
+        const res = await fetch(url);
+        if(res.ok) return res.json();
+        if(res.status === 429 || res.status === 418 || res.status === 503){
+          await sleep(wait);
+          wait = Math.min(5000, Math.floor(wait*1.7));
+          continue;
+        }
+        const txt = await res.text().catch(()=> "");
+        throw new Error(`HTTP ${res.status} ${txt?.slice(0,120)}`);
+      }
+      throw new Error("Rate limit: demasiados reintentos.");
+    }
+
+    /* =========================
        Binance market data (public)
        ========================= */
     async function fetchKlines(symbol, interval, limit){
       const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=${limit}`;
-      const res = await fetch(url);
-      if(!res.ok) throw new Error(`klines ${symbol} ${interval} (${res.status})`);
-      const data = await res.json();
+      const data = await retryFetchJson(url, 6);
       return data.map(k=>({ t:+k[0], o:+k[1], h:+k[2], l:+k[3], c:+k[4] }));
     }
 
@@ -666,12 +601,66 @@ XRPUSDT</textarea>
       if(cached && (now - cached.ts) < BOOK_TTL_MS) return cached;
 
       const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${encodeURIComponent(symbol)}`;
-      const res = await fetch(url);
-      if(!res.ok) throw new Error(`bookTicker ${symbol} (${res.status})`);
-      const d = await res.json();
+      const d = await retryFetchJson(url, 6);
       const out = { ts: now, bid: +d.bidPrice, ask: +d.askPrice };
       bookCache.set(symbol, out);
       return out;
+    }
+
+    /* =========================
+       AUTO-UNIVERSE (TOP 50) + ALL TFs (Binance)
+       ========================= */
+    const TOP_N_SYMBOLS = 50;
+    const AUTO_TFS = ["1m","3m","5m","15m","30m","1h","2h","4h","6h","8h","12h","1d","3d","1w","1M"];
+
+    const EXCLUDE_SYMBOLS = new Set([
+      "USDCUSDT","FDUSDUSDT","TUSDUSDT","USDPUSDT","BUSDUSDT","DAIUSDT","PYUSDUSDT",
+      "EURUSDT","TRYUSDT","BRLUSDT","UAHUSDT","RUBUSDT"
+    ]);
+
+    async function fetchExchangeInfo(){
+      return retryFetchJson("https://api.binance.com/api/v3/exchangeInfo", 6);
+    }
+    async function fetch24hTickers(){
+      return retryFetchJson("https://api.binance.com/api/v3/ticker/24hr", 6);
+    }
+    function isSpotTradingUSDT(infoSym){
+      if(!infoSym) return false;
+      if(infoSym.status !== "TRADING") return false;
+      if(infoSym.quoteAsset !== "USDT") return false;
+      if(infoSym.isSpotTradingAllowed === false) return false;
+      if(infoSym.permissions && Array.isArray(infoSym.permissions) && !infoSym.permissions.includes("SPOT")) return false;
+      return true;
+    }
+    function isExcludedSymbol(symbol){
+      if(EXCLUDE_SYMBOLS.has(symbol)) return true;
+      if(symbol.endsWith("UPUSDT") || symbol.endsWith("DOWNUSDT")) return true;
+      if(symbol.includes("BULLUSDT") || symbol.includes("BEARUSDT")) return true;
+      return false;
+    }
+    async function autoDiscoverTopSymbols(){
+      setStatus("descubriendo TOP50…","rgba(255,204,102,.95)");
+      log("AUTO universe: exchangeInfo + 24hr tickers");
+
+      const [ex, t24] = await Promise.all([fetchExchangeInfo(), fetch24hTickers()]);
+
+      const spotUSDT = new Set(
+        ex.symbols
+          .filter(isSpotTradingUSDT)
+          .map(s=>s.symbol)
+          .filter(sym => !isExcludedSymbol(sym))
+      );
+
+      const ranked = t24
+        .filter(t => spotUSDT.has(t.symbol))
+        .map(t => ({ symbol: t.symbol, quoteVol: Number(t.quoteVolume)||0 }))
+        .sort((a,b)=> b.quoteVol - a.quoteVol);
+
+      const top = ranked.slice(0, TOP_N_SYMBOLS).map(x=>x.symbol);
+      if(!top.length) throw new Error("AUTO universe: no se encontraron símbolos USDT spot.");
+
+      log(`AUTO TOP${TOP_N_SYMBOLS}: ${top.slice(0,12).join(", ")} ...`);
+      return top;
     }
 
     /* =========================
@@ -856,7 +845,7 @@ XRPUSDT</textarea>
     }
 
     /* =========================
-       SL/TP helpers (paper)
+       SL/TP
        ========================= */
     function sltp(price, atr14){
       const slMode=$("#slMode")?.value ?? "atr";
@@ -867,12 +856,12 @@ XRPUSDT</textarea>
     }
 
     /* =========================
-       Micro/liquidity profile + penalty (2.0)
+       Micro/liquidity profile + penalty
        ========================= */
     const MICRO_SAMPLES = 10;
     const MICRO_SAMPLE_GAP_MS = 160;
     const MICRO_TTL_MS = 10 * 60 * 1000;
-    const microCache = new Map(); // symbol -> profile
+    const microCache = new Map();
 
     function stdev(arr){
       if(arr.length < 2) return 0;
@@ -900,7 +889,6 @@ XRPUSDT</textarea>
           const bid=b.bid, ask=b.ask;
           const mid=(bid+ask)/2;
           const spreadPct = mid ? ((ask-bid)/mid) : 0;
-
           if(Number.isFinite(spreadPct)) spreads.push(spreadPct);
 
           if(prevBid!=null && prevAsk!=null){
@@ -908,7 +896,7 @@ XRPUSDT</textarea>
           }
           if(prevMid!=null && mid){
             const d = Math.abs(mid-prevMid)/(prevMid||1);
-            midJumps.push(d > 0.0002 ? 1 : 0); // 2 bps
+            midJumps.push(d > 0.0002 ? 1 : 0);
           }
 
           prevBid=bid; prevAsk=ask; prevMid=mid;
@@ -952,12 +940,11 @@ XRPUSDT</textarea>
     function latencyMs(){ return randInt(LAT_MIN_MS, LAT_MAX_MS); }
 
     function marketRegime(spreadPct, atrPct){
-      const spreadBad = 0.0008; // 0.08%
-      const atrBad    = 0.0060; // 0.60%
+      const spreadBad = 0.0008;
+      const atrBad    = 0.0060;
       const s = clamp(spreadPct / spreadBad, 0, 2);
       const a = clamp(atrPct    / atrBad,    0, 2);
       const stress = clamp((0.55*s + 0.45*a) / 2, 0, 1);
-
       if(stress >= 0.65) return { name:"STRESS", stress };
       if(stress >= 0.35) return { name:"CHOPPY", stress };
       return { name:"NORMAL", stress };
@@ -1019,7 +1006,6 @@ XRPUSDT</textarea>
       const dh = don.hi[i], dl = don.lo[i];
 
       let score = 0;
-
       if(side==="BUY" && e9!=null && e21!=null && e9>e21) score += 18;
       if(side==="SELL" && e9!=null && e21!=null && e9<e21) score += 18;
 
@@ -1051,7 +1037,6 @@ XRPUSDT</textarea>
         if(side==="BUY" && c>dh) score += 8;
         if(side==="SELL" && c<dl) score += 8;
       }
-
       return clamp(score, 0, 100);
     }
     function minScoreForRegime(regimeName){
@@ -1064,7 +1049,6 @@ XRPUSDT</textarea>
       const r  = ind.rsi[i];
       const mac = ind.macd.line[i], sig = ind.macd.signal[i];
       if(e9==null||e21==null||r==null||mac==null||sig==null) return false;
-
       if(side==="BUY") return (e9>e21) && (r>=55) && (mac>sig);
       return (e9<e21) && (r<=45) && (mac<sig);
     }
@@ -1094,7 +1078,7 @@ XRPUSDT</textarea>
       S.cooldowns[k] = { until, lossStreak, mult: Math.min(6, mult + 1) };
 
       toast("COOLDOWN", `${k} pausado ${Math.round(dur/3600000)}h por pérdidas seguidas (${lossStreak}).`, "warn");
-      log(`COOLDOWN SET ${k} dur=${dur}ms until=${new Date(until).toLocaleString()} lossStreak=${lossStreak}`);
+      log(`COOLDOWN SET ${k} until=${new Date(until).toLocaleString()} streak=${lossStreak}`);
     }
     function clearCooldownOnWin(pick){
       const k = cdKeyFromPick(pick);
@@ -1105,15 +1089,12 @@ XRPUSDT</textarea>
       log(`COOLDOWN CLEAR ${k} (win) mult->${newMult}`);
     }
     function registerTradeOutcomeForCooldown(pick, pnlPct){
-      const k = cdKeyFromPick(pick);
       const prev = cooldownInfo(pick);
-
       if(pnlPct > 0){ clearCooldownOnWin(pick); return; }
-
       const lossStreak = (prev.lossStreak || 0) + 1;
+      const k = cdKeyFromPick(pick);
       S.cooldowns = S.cooldowns || {};
       S.cooldowns[k] = { ...prev, lossStreak, until: prev.until || 0, mult: prev.mult || 1 };
-
       if(lossStreak >= 2) setCooldown(pick, lossStreak);
       else log(`COOLDOWN streak ${k} lossStreak=${lossStreak}`);
     }
@@ -1152,7 +1133,6 @@ XRPUSDT</textarea>
         const m = map[key];
         m.pnlSum += (t.pnlPct || 0);
         m.trades++;
-
         if((t.pnlPct || 0) < 0){
           m.curRun += (t.pnlPct || 0);
           m.worstRun = Math.min(m.worstRun, m.curRun);
@@ -1193,9 +1173,7 @@ XRPUSDT</textarea>
       const mult = clamp(prev.mult || 1, 1, 4);
       const dur  = clamp(SYM_BLOCK_BASE_MS * mult, SYM_BLOCK_BASE_MS, SYM_BLOCK_MAX_MS);
       const until = Date.now() + dur;
-
       S.symbolBlocks[symbol] = { until, reason, mult: Math.min(4, mult + 1), last: Date.now() };
-
       toast("ROTACIÓN", `${symbol} bloqueado ${Math.round(dur/3600000)}h. Motivo: ${reason}`, "warn");
       log(`SYMBOL BLOCK ${symbol} until=${new Date(until).toLocaleString()} reason=${reason}`);
     }
@@ -1245,7 +1223,7 @@ XRPUSDT</textarea>
           }
         }
 
-        await sleep(120);
+        await sleep(80);
       }
     }
 
@@ -1253,8 +1231,8 @@ XRPUSDT</textarea>
        Auto-fallback TOP3 + robust reopt
        ========================= */
     const POOL_SIZE = 30;
-    function pickKey(p){ return `${p.symbol}@${p.tf}@${p.strategy}`; }
 
+    function pickKey(p){ return `${p.symbol}@${p.tf}@${p.strategy}`; }
     function pickIsBlockedNow(p){
       if(isSymbolBlocked(p.symbol)) return true;
       if(isBlacklistedKey(pickKey(p))) return true;
@@ -1299,7 +1277,6 @@ XRPUSDT</textarea>
         minTrades: Number($("#minTrades")?.value)||60,
         maxDD: Number($("#maxDD")?.value)||25,
         limit: Number($("#limit")?.value)||900,
-        tfs: $("#tfs")?.value ?? "5m\n15m\n1h",
       };
     }
     function restoreSelectorUI(snap){
@@ -1307,7 +1284,6 @@ XRPUSDT</textarea>
       if($("#minTrades")) $("#minTrades").value = String(snap.minTrades);
       if($("#maxDD")) $("#maxDD").value = String(snap.maxDD);
       if($("#limit")) $("#limit").value = String(snap.limit);
-      if($("#tfs")) $("#tfs").value = snap.tfs;
     }
 
     async function robustSelectPool(){
@@ -1330,7 +1306,6 @@ XRPUSDT</textarea>
             if($("#minTrades")) $("#minTrades").value = String(Math.max(8, Math.floor(snap.minTrades*0.5)));
             if($("#maxDD")) $("#maxDD").value = String(Math.min(70, Math.ceil(snap.maxDD*2.0)));
             if($("#limit")) $("#limit").value = String(Math.max(300, Math.floor(snap.limit*0.6)));
-            if($("#tfs")) $("#tfs").value = "5m\n15m\n1h";
           }
         },
       ];
@@ -1340,7 +1315,7 @@ XRPUSDT</textarea>
           st.apply();
           log(`ROBUST SELECT stage=${st.name}`);
           try{
-            const pool = await autoSelectPool(); // retorna pool
+            const pool = await autoSelectPool();
             if(Array.isArray(pool) && pool.length){
               log(`ROBUST SELECT ok stage=${st.name} pool=${pool.length}`);
               return pool;
@@ -1384,11 +1359,9 @@ XRPUSDT</textarea>
     }
 
     /* =========================
-       Backtest engine (for selection)
-       NOTE: selection backtest is price-based; live applies bid/ask+slip+fees+lat.
+       Backtest engine (selection)
        ========================= */
     function backtestSlice(candles, stratFn){
-      const closes = candles.map(x=>x.c);
       const ind = indicatorsFor(candles);
 
       let pos=null;
@@ -1460,12 +1433,13 @@ XRPUSDT</textarea>
       return pos / Math.max(1, segRets.length);
     }
 
+    /* =========================
+       AUTO SELECTOR — TOP50 + ALL TFs
+       ========================= */
     async function autoSelectPool(){
-      // 0) símbolos/tfs
-      let symbols = ($("#symbols")?.value ?? "BTCUSDT\nETHUSDT\nXRPUSDT")
-        .split("\n").map(s=>s.trim().toUpperCase()).filter(Boolean);
-
-      let tfs = ($("#tfs")?.value ?? "5m\n15m\n1h").split("\n").map(s=>s.trim()).filter(Boolean);
+      // AUTO: descubrir universo y TFs
+      const symbols = await autoDiscoverTopSymbols();
+      const tfs = AUTO_TFS.slice();
 
       const limit = Math.max(200, Number($("#limit")?.value)||900);
       const minTrades = Math.max(1, Number($("#minTrades")?.value)||60);
@@ -1476,31 +1450,31 @@ XRPUSDT</textarea>
       cleanupExpiredBlacklist();
       cleanupExpiredSymbolBlocks();
 
-      // 1) rotación automática antes de optimizar
+      // rotación automática antes de optimizar
       await evaluateSymbolHealthAndRotate(symbols);
       cleanupExpiredSymbolBlocks();
-      symbols = symbols.filter(sym => !isSymbolBlocked(sym));
+      const activeSymbols = symbols.filter(sym => !isSymbolBlocked(sym));
+      if(!activeSymbols.length) throw new Error("Todos los símbolos TOP50 quedaron bloqueados por rotación (temporal).");
 
-      if(!symbols.length) throw new Error("Todos los símbolos quedaron bloqueados por rotación. Espera expiración o agrega símbolos.");
-
-      // 2) microprofile por símbolo
+      // microprofile por símbolo
       setStatus("micro/liquidez…","rgba(255,204,102,.95)");
       const microMap = {};
-      for(const sym of symbols){
+      for(const sym of activeSymbols){
         try{ microMap[sym] = await microProfile(sym); }
         catch{ microMap[sym] = { avg:0,p95:0,sd:0,quoteChangeRate:0,midJumpRate:0 }; }
-        await sleep(40);
+        await sleep(30);
       }
 
-      // 3) loop candidates
-      let total = symbols.length * tfs.length * strats.length;
+      let total = activeSymbols.length * tfs.length * strats.length;
       let done = 0;
       $("#prog").textContent = `${done}/${total}`;
-      log(`Selector: symbols=${symbols.length}, tfs=${tfs.length}, strats=${strats.length}, limit=${limit}, stable=${useStable}`);
+      log(`Selector AUTO: symbols=${activeSymbols.length}, tfs=${tfs.length}, strats=${strats.length}, limit=${limit}, stable=${useStable}`);
 
       const candidates=[];
+      const TF_SLEEP = 90;
+      const SYM_SLEEP = 90;
 
-      for(const sym of symbols){
+      for(const sym of activeSymbols){
         for(const tf of tfs){
           let candles=null;
           try{
@@ -1510,7 +1484,7 @@ XRPUSDT</textarea>
             done += strats.length;
             $("#prog").textContent = `${done}/${total}`;
             log(`Skip ${sym}@${tf}: ${e.message||e}`);
-            await sleep(120);
+            await sleep(TF_SLEEP);
             continue;
           }
 
@@ -1564,13 +1538,14 @@ XRPUSDT</textarea>
             });
           }
 
-          await sleep(120);
+          await sleep(TF_SLEEP);
         }
+        await sleep(SYM_SLEEP);
       }
 
       candidates.sort((a,b)=>b.score-a.score);
       const pool = candidates.slice(0, POOL_SIZE);
-      if(!pool.length) throw new Error("No hay candidatos válidos con los filtros actuales.");
+      if(!pool.length) throw new Error("AUTO: No hay candidatos válidos con los filtros actuales.");
       return pool;
     }
 
@@ -1584,14 +1559,15 @@ XRPUSDT</textarea>
       maxDD: 0,
       lastOptTs: 0,
       nextOptTs: 0,
+
       candidatePool: [],
       bestPicks: [],
       positions: {},
 
-      cooldowns: {},     // combo cooldown
-      blacklist: {},     // combo weekly blacklist
-      symbolBlocks: {},  // symbol rotation block
-      symbolStress: {},  // symbol stress stats
+      cooldowns: {},
+      blacklist: {},
+      symbolBlocks: {},
+      symbolStress: {},
 
       week: { startTs: Date.now(), startBal: 20, peakBal: 20, maxDD: 0, trades: [], optHistory: [] },
       day:  { startDayKey: "", startBal: 20, peakBal: 20, maxDD: 0, trades: 0, halted: false, haltReason: "" },
@@ -1637,7 +1613,7 @@ XRPUSDT</textarea>
     }
 
     /* =========================
-       Trading (paper) positions
+       Paper trading positions
        ========================= */
     function keyOf(p){ return `${p.symbol}@${p.tf}@${p.strategy}`; }
 
@@ -1676,10 +1652,8 @@ XRPUSDT</textarea>
 
       const feeOpen = pos.feeRateOpen ?? 0.0010;
       const feeClose = micro?.feeRate ?? 0.0010;
-
       const pnlPctAfterFees = movePct - (feeOpen + feeClose);
 
-      // sizing (informativo) + reduce riesgo en estrés
       const riskTotal = Number($("#riskTotal")?.value)||0.01;
       const perPickRisk = riskTotal / Math.max(1, S.bestPicks.length);
       const slPct = Math.abs((pos.sl - pos.entryFill) / pos.entryFill) || 0.001;
@@ -1692,11 +1666,10 @@ XRPUSDT</textarea>
 
       const adjPnl = pnlPctAfterFees * leverageLike;
 
-      // COOLDOWN registra resultado
+      // cooldown tracking
       registerTradeOutcomeForCooldown(pick, adjPnl);
 
       S.balance *= (1 + adjPnl);
-
       ensureDay();
       S.day.trades += 1;
 
@@ -1728,7 +1701,6 @@ XRPUSDT</textarea>
 
         leverageLikeBase,
         leverageLikeApplied: leverageLike,
-
         microPenalty: pick.micro?.penalty ?? null
       };
 
@@ -1780,14 +1752,8 @@ XRPUSDT</textarea>
       const feeO    = S.week.trades.map(t=>t.feeRateOpen).filter(Number.isFinite);
       const feeC    = S.week.trades.map(t=>t.feeRateClose).filter(Number.isFinite);
 
-      const selAvg = S.bestPicks.map(p=>p.micro?.avgSpreadPct).filter(Number.isFinite);
-      const selP95 = S.bestPicks.map(p=>p.micro?.p95SpreadPct).filter(Number.isFinite);
-      const selSd  = S.bestPicks.map(p=>p.micro?.spreadStdPct).filter(Number.isFinite);
-      const selQcr = S.bestPicks.map(p=>p.micro?.quoteChangeRate).filter(Number.isFinite);
-      const selMjr = S.bestPicks.map(p=>p.micro?.midJumpRate).filter(Number.isFinite);
-
       return [
-        `Reporte semanal (paper, AUTO todo integrado)`,
+        `Reporte semanal (paper, AUTÓNOMO TOP50 + ALL TFs)`,
         `Inicio: ${new Date(S.week.startTs).toLocaleString()}`,
         `Fin:    ${new Date().toLocaleString()}`,
         ``,
@@ -1802,12 +1768,11 @@ XRPUSDT</textarea>
         `Micro LIVE (prom): spread ${(mean(spreads)*100).toFixed(3)}% | slip ${(mean(slips)*100).toFixed(3)}%`,
         `Fees (prom): open ${(mean(feeO)*100).toFixed(3)}% | close ${(mean(feeC)*100).toFixed(3)}%`,
         `Latencia (prom): open ${Math.round(mean(latO))}ms | close ${Math.round(mean(latC))}ms`,
-        `Selector (TOP3 micro/liquidez): avg ${(mean(selAvg)*100).toFixed(3)}% p95 ${(mean(selP95)*100).toFixed(3)}% sd ${(mean(selSd)*100).toFixed(3)}% qcr ${fmt(mean(selQcr),2)} mjr ${fmt(mean(selMjr),2)}`,
         ``,
         `PnL por estrategia:`,
         stratLines,
         ``,
-        `TOP actual:`,
+        `TOP actual (pool=${(S.candidatePool||[]).length}):`,
         ...(S.bestPicks||[]).map((p,i)=>` ${i+1}) ${p.symbol}@${p.tf} ${p.strategy} score=${fmt(p.score,4)} pen=${fmt(p.micro?.penalty||0,4)}`)
       ].join("\n");
     }
@@ -1816,7 +1781,6 @@ XRPUSDT</textarea>
       const weekMs = 7*24*60*60*1000;
       if(Date.now()-S.week.startTs < weekMs) return false;
 
-      // eval blacklist antes de resetear semana
       evaluateAndBlacklistWeek();
 
       const rep = buildWeeklyReport();
@@ -1940,8 +1904,6 @@ XRPUSDT</textarea>
       const pool = await robustSelectPool();
       S.candidatePool = pool;
       S.bestPicks = pool.slice(0,3);
-
-      // fallback (evita bloqueos)
       applyFallbackPicks(3);
 
       S.lastOptTs = Date.now();
@@ -1971,12 +1933,10 @@ XRPUSDT</textarea>
       if(STOP) return;
 
       ensureDay();
-
       const maxDDDaily = (Number($("#dailyMaxDD")?.value)||5)/100;
       const maxTradesDay = Number($("#maxTradesDay")?.value)||20;
 
       if(!S.bestPicks.length) await doReopt();
-
       await ensurePicksOrReopt(3);
 
       setEquityPoint();
@@ -1989,7 +1949,6 @@ XRPUSDT</textarea>
       }
 
       const analysisOnly = $("#analysisOnly")?.checked ?? false;
-
       let microLineParts = [];
 
       for(const pick of S.bestPicks){
@@ -1998,7 +1957,6 @@ XRPUSDT</textarea>
         cleanupExpiredSymbolBlocks();
         cleanupExpiredBlacklist();
 
-        // Symbol rotation block
         if(isSymbolBlocked(pick.symbol)){
           const b = S.symbolBlocks[pick.symbol];
           const hrs = Math.max(0, Math.ceil((b.until - Date.now())/3600000));
@@ -2025,7 +1983,6 @@ XRPUSDT</textarea>
         const atr14 = ind.atr[i] ?? 0;
         const atrPct = closePrice ? (atr14/closePrice) : 0;
 
-        // micro display + record regimes
         let regName = "NORMAL";
         try{
           const b = await fetchBookTicker(pick.symbol);
@@ -2037,7 +1994,6 @@ XRPUSDT</textarea>
           microLineParts.push(`${pick.symbol}:${reg.name} spr ${(spreadPct*100).toFixed(3)}% pen ${fmt(pick.micro?.penalty||0,3)}`);
         }catch{}
 
-        // daily kill switch
         updateDayDD();
         if(S.day.maxDD >= maxDDDaily){
           await closeAllPositionsAtMarket("DAILY_KILL");
@@ -2047,7 +2003,6 @@ XRPUSDT</textarea>
 
         const pos = S.positions[k];
 
-        // BLACKLIST: no abrir si combo bloqueado
         if(!pos && isBlacklistedPick(pick)){
           const key = blKeyFromPick(pick);
           const bl = S.blacklist[key];
@@ -2056,7 +2011,6 @@ XRPUSDT</textarea>
           continue;
         }
 
-        // COOLDOWN: no abrir si combo en pausa
         if(!pos && isInCooldown(pick)){
           const cd = cooldownInfo(pick);
           const mins = Math.max(0, Math.ceil((cd.until - Date.now())/60000));
@@ -2064,10 +2018,9 @@ XRPUSDT</textarea>
           continue;
         }
 
-        // OPEN (EDGE GATING AUTO)
+        // OPEN (EDGE GATING)
         if(!pos && sig?.enter && !analysisOnly){
           const side = sig.enter;
-
           const score = signalScore(ind, i, side);
           const minScore = minScoreForRegime(regName);
 
@@ -2082,16 +2035,15 @@ XRPUSDT</textarea>
 
           const micro = await realisticFill(pick.symbol, side, atrPct);
           await openPos(pick, side, micro.fill, atr14, micro);
-
           toast("EDGE OK", `${pick.symbol} ${pick.tf} ${pick.strategy} ${side} | score ${score}/100 | ${regName} (min ${minScore})`, "good");
 
           saveState(); syncUI();
           if(UID) await cloudSet(runtimeDoc(), { balance:S.balance, maxDD:S.maxDD, positions:S.positions, day:S.day }).catch(()=>{});
-          await sleep(180);
+          await sleep(160);
           continue;
         }
 
-        // CLOSE logic
+        // CLOSE
         if(pos){
           let reason=null;
           let levelForExit=null;
@@ -2112,11 +2064,9 @@ XRPUSDT</textarea>
             const exitSide = (pos.side==="BUY") ? "SELL" : "BUY";
             const micro = await realisticFill(pick.symbol, exitSide, atrPct);
             let exitFill = micro.fill;
-
             if(levelForExit!=null){
               exitFill = fillFromLevelForExit(pos.side, levelForExit, micro.slipPct);
             }
-
             await closePos(pick, exitFill, reason, micro);
 
             ensureDay(); updateDayDD();
@@ -2192,7 +2142,7 @@ XRPUSDT</textarea>
 
       applyStartBalIfNew();
       setStatus("iniciando…", "rgba(255,204,102,.95)");
-      toast("Auto","Iniciando (todo integrado).", "good");
+      toast("Auto","Iniciando (autónomo TOP50 + ALL TFs)…", "good");
       log("START AUTO");
 
       const poll = Math.max(10, Number($("#pollSec")?.value)||60) * 1000;
@@ -2245,7 +2195,6 @@ XRPUSDT</textarea>
 
         await cloudSet(userDoc(), { createdAt: serverTimestamp() }, true).catch(()=>{});
 
-        // carga picks/pool si existen
         try{
           const p = await getDoc(picksDoc());
           if(p.exists()){
